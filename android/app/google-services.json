@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "215147012889",
+    "project_id": "crispytalk-50e3e",
+    "storage_bucket": "crispytalk-50e3e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:215147012889:android:da7e512566b29c4fd29b88",
+        "android_client_info": {
+          "package_name": "com.example.crispy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmiRyDiYZ9zWWaGjF4KXrdnmpMbF4S9Wo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
