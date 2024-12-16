@@ -6,6 +6,7 @@ import 'package:crispy/provider/callProvider/audioCallProvider.dart';
 import 'package:crispy/provider/callProvider/videoCallProvider.dart';
 import 'package:crispy/provider/chat/chatProvider.dart';
 import 'package:crispy/provider/cloudinary/cloudinary_provider.dart';
+import 'package:crispy/provider/current_user/current_user_provider.dart';
 import 'package:crispy/provider/mediaSelection/mediaSelectionProvider.dart';
 import 'package:crispy/provider/notification/notificationProvider.dart';
 import 'package:crispy/provider/otherUserData/otherUserDataProvider.dart';
@@ -90,6 +91,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => UserProvider2()),
         ChangeNotifierProvider(create: (_) => AudioCallProvider()),
         ChangeNotifierProvider(create: (_) => VideoCallProvider()),
+        ChangeNotifierProvider(create: (_) => CurrentUserProvider()),
       ],
       child: Consumer<AppLifeCycleProvider>(
           builder: (context,provider,child) {

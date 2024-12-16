@@ -20,6 +20,7 @@ import '../../model/res/constant/app_icons.dart';
 import '../../model/res/widgets/app_text.dart.dart';
 import '../../provider/action/action_provider.dart';
 import '../../provider/stream/streamProvider.dart';
+import '../../provider/user_provider/user_provider.dart';
 import '../../provider/video/videoProvider.dart';
 import '../myProfile/otherUserProfile/otherUserProfile.dart';
 import 'mediaViewerScreen.dart';
@@ -120,10 +121,13 @@ class VideoScreen extends StatelessWidget {
                                     // Heart Icon
                                     GestureDetector(
                                       onTap: () {
+                                        final currentUserName = Provider.of<UserProvider>(context, listen: false).users[1];  // Assuming you have a UserProvider that provides the current user's name
+
                                         Provider.of<ActionProvider>(context, listen: false)
                                             .toggleLike(video.timeStamp,
                                           video.likes,
-                                          video.userDetails!.name,
+                                          currentUserName.toString(),
+                                          // changing name,
                                           video.userDetails!.fcmToken,
                                           video.userUid,
                                         );

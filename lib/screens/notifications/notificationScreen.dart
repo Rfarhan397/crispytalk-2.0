@@ -1,16 +1,18 @@
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
+import 'package:crispy/provider/stream/streamProvider.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import '../../constant.dart';
 import '../../model/res/constant/app_assets.dart';
-import '../../model/res/constant/app_colors.dart';
 import '../../model/res/widgets/app_text.dart.dart';
 import '../../provider/notification/notificationProvider.dart';
 
 class NotificationScreen extends StatelessWidget {
+  NotificationScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,18 +21,19 @@ class NotificationScreen extends StatelessWidget {
           Container(
             height: 25.h,
             decoration: const BoxDecoration(
-                color: primaryColor,
-                borderRadius: BorderRadius.only(
-                    bottomRight: Radius.circular(16),
-                    bottomLeft: Radius.circular(16))),
+              color: primaryColor,
+              borderRadius: BorderRadius.only(
+                bottomRight: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
+              ),
+            ),
           ),
           SafeArea(
             child: Column(
               children: [
                 // Custom AppBar
-
-                 Padding(
-                  padding: EdgeInsets.all(16.0),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
                   child: Row(
                     children: [
                       GestureDetector(
@@ -42,33 +45,27 @@ class NotificationScreen extends StatelessWidget {
                           width: 25,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(100),
-                            color: Colors.white
+                            color: Colors.white,
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-
-                                top: 2.0,
-                              left: 8,
-                            ),
-                            child: Icon(
-                              Icons.arrow_back_ios,
-                              color: primaryColor,size: 15,),
+                          child: const Icon(
+                            Icons.arrow_back_ios,
+                            color: primaryColor,
+                            size: 15,
                           ),
                         ),
                       ),
-                      // AppBackButton(color: Colors.white,buttonColor: primaryColor,),
-                      SizedBox(width: 16),
-                      AppTextWidget(text:
-                        "Notification",
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
+                      const SizedBox(width: 16),
+                      const AppTextWidget(
+                        text: "Notification",
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
                       ),
                     ],
                   ),
                 ),
-                SizedBox(height: 3.h,),
-                // Segmented Control for "Today" and "Last Week"
+                SizedBox(height: 3.h),
+                // Segmented Control for Tabs
                 Consumer<NotificationProvider>(
                   builder: (context, notificationProvider, _) {
                     return Container(
@@ -76,27 +73,22 @@ class NotificationScreen extends StatelessWidget {
                       height: 6.h,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(50),
-                        color: Colors.white
+                        color: Colors.white,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           GestureDetector(
-                            onTap: () {
-                              notificationProvider.updateIndex(0);
-                            },
+                            onTap: () => notificationProvider.updateIndex(0),
                             child: AnimatedContainer(
                               height: 4.h,
                               duration: const Duration(milliseconds: 300),
+                              padding: EdgeInsets.symmetric(horizontal: 10.w),
                               decoration: BoxDecoration(
                                 color: notificationProvider.selectedIndex == 0
                                     ? primaryColor
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(30),
-                              ),
-                              padding:  EdgeInsets.symmetric(
-                               // vertical: 10,
-                                horizontal: 10.w,
                               ),
                               child: Center(
                                 child: Text(
@@ -113,25 +105,17 @@ class NotificationScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 20),
-
-                          // Custom Button for "Last Week"
                           GestureDetector(
-                            onTap: () {
-                              notificationProvider.updateIndex(1);
-                            },
+                            onTap: () => notificationProvider.updateIndex(1),
                             child: AnimatedContainer(
                               height: 4.h,
                               duration: const Duration(milliseconds: 300),
+                              padding: EdgeInsets.symmetric(horizontal: 10.w),
                               decoration: BoxDecoration(
                                 color: notificationProvider.selectedIndex == 1
                                     ? primaryColor
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(30),
-
-                              ),
-                              padding:  EdgeInsets.symmetric(
-                                //vertical: 10,
-                                horizontal: 10.w,
                               ),
                               child: Center(
                                 child: Text(
@@ -152,76 +136,69 @@ class NotificationScreen extends StatelessWidget {
                     );
                   },
                 ),
-                 SizedBox(height: 5.h),
-
+                SizedBox(height: 3.h),
                 // Notification List
                 Expanded(
-                  child: Consumer<NotificationProvider>(
-                    builder: (context, notificationProvider, _) {
-                      return ListView(
-                        padding: const EdgeInsets.all(16),
-                        children: [
-                          if (notificationProvider.selectedIndex == 0) ...[
-                            // Section: Earlier this Day (for "Today")
-                            const Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                AppTextWidget(text:
-                                  'Earlier this Day',
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
-                                ),
-                                AppTextWidget(text:
-                                  'See all',
-                                    color: primaryColor,
-                                    fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            NotificationCard(
-                              title: 'Reminder',
-                              subtitle: 'Started Following you',
-                              time: '1 min ago',
-                              actionText: 'Follow Back',
-                            ),
-                            NotificationCard(
-                              title: 'Alexa',
-                              subtitle: 'Liked your video',
-                              time: '1 min ago',
-                              actionText: 'Follow Back',
-                            ),
-                          ] else ...[
-                            // Section: Last Week (for "Last Week")
-                            const Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Last Week',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  'See all',
-                                  style: TextStyle(
-                                    color: Colors.orange,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            NotificationCard(
-                              title: 'Reminder',
-                              subtitle: 'Started Following you',
-                              time: '1 min ago',
-                              actionText: 'Follow Back',
-                            ),
-                          ]
-                        ],
+                  child: StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: StreamDataProvider()
+                        .getNotificationsWithUserDetails(currentUser),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Center(
+                          child: AppTextWidget(
+                            text: "No notifications yet.",
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                        );
+                      }
+
+                      final notifications = snapshot.data!;
+                      final todayNotifications = notifications.where((notification) {
+                        final notificationDate = DateTime.fromMillisecondsSinceEpoch(int.parse(notification['timestamp']));
+                        return _isToday(notificationDate);
+                      }).toList();
+
+                      final lastWeekNotifications = notifications.where((notification) {
+                        final notificationDate = DateTime.fromMillisecondsSinceEpoch(int.parse(notification['timestamp']));
+                        return !_isToday(notificationDate);
+                      }).toList();
+
+                      return Consumer<NotificationProvider>(
+                        builder: (context, notificationProvider, _) {
+                          final selectedNotifications = notificationProvider.selectedIndex == 0
+                              ? todayNotifications
+                              : lastWeekNotifications;
+
+                          if (selectedNotifications.isEmpty) {
+                            return const Center(
+                              child: AppTextWidget(
+                                text: "No notifications in this category.",
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
+                            );
+                          }
+
+                          return ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: selectedNotifications.length,
+                            itemBuilder: (context, index) {
+                              final notification = selectedNotifications[index];
+                              return NotificationCard(
+                                title: notification['senderName'] ?? 'Unknown',
+                                subtitle: notification['message'] ?? '',
+                                imageUrl: notification['senderProfileUrl'] ?? '',
+                                time: _formatTime(notification['timestamp']),
+                                actionText: 'View',
+                              );
+                            },
+                          );
+                        },
                       );
                     },
                   ),
@@ -233,6 +210,24 @@ class NotificationScreen extends StatelessWidget {
       ),
     );
   }
+
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year && date.month == now.month && date.day == now.day;
+  }
+
+  String _formatTime(String timestamp) {
+    final dateTime = DateTime.fromMillisecondsSinceEpoch(int.parse(timestamp));
+    final now = DateTime.now();
+
+    if (now.difference(dateTime).inMinutes < 60) {
+      return '${now.difference(dateTime).inMinutes} min ago';
+    } else if (now.difference(dateTime).inHours < 24) {
+      return '${now.difference(dateTime).inHours} hours ago';
+    } else {
+      return '${now.difference(dateTime).inDays} days ago';
+    }
+  }
 }
 
 class NotificationCard extends StatelessWidget {
@@ -240,12 +235,14 @@ class NotificationCard extends StatelessWidget {
   final String subtitle;
   final String time;
   final String actionText;
+  final String imageUrl;
 
   NotificationCard({
     required this.title,
     required this.subtitle,
     required this.time,
     required this.actionText,
+    required this.imageUrl,
   });
 
   @override
@@ -254,57 +251,55 @@ class NotificationCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Card(
         color: Colors.white,
-        shadowColor: AppColors.textGrey,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 3,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              SizedBox(
-                height: 24,
-                width: 30,
+               CircleAvatar(
+                radius: 20,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: Image.asset(AppAssets.lady,fit: BoxFit.cover,)),
+                    borderRadius: BorderRadius.circular(100),
+                    child: CachedShimmerImageWidget(imageUrl: imageUrl)),
               ),
-               SizedBox(width: 2.w),
+              SizedBox(width: 2.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AppTextWidget(text:
-                      title,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      color: Color(0xff6F6D6D),
+                    AppTextWidget(
+                      text: title,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: const Color(0xff6F6D6D),
                     ),
-                     SizedBox(height: 0.5.h),
+                    SizedBox(height: 0.5.h),
                     AppTextWidget(
                       text: subtitle,
-                      color: Color(0xff6F6D6D),
-                      fontSize: 12,),
+                      color: const Color(0xff6F6D6D),
+                      fontSize: 12,
+                    ),
                   ],
                 ),
               ),
               Column(
                 children: [
                   AppTextWidget(text: time, color: Colors.grey),
-                  SizedBox(height: 1.h,),
+                  SizedBox(height: 1.h),
                   Container(
-                    padding: EdgeInsets.all(5),
-                    width: 80,  // Set the desired width
-                    height: 30,
+                    padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                        color:  primaryColor,
-                        borderRadius: BorderRadius.circular(8)
+                      color: primaryColor,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Center(
-                      child: Text(actionText,style: TextStyle(
+                    child: Text(
+                      actionText,
+                      style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
-                      ),),
+                      ),
                     ),
                   ),
                 ],

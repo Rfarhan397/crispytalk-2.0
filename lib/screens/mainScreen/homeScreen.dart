@@ -69,7 +69,9 @@ class HomeScreen extends StatelessWidget {
                   delegate: CustomSearchDelegate(),
                 );
               },
-              child: SvgPicture.asset(AppIcons.search)),
+              child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 3.w),
+                  child: SvgPicture.asset(AppIcons.search))),
 
         ],
       ),

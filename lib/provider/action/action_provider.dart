@@ -201,7 +201,7 @@ class ActionProvider extends ChangeNotifier {
   }
 
   ///////////to like and unlike the post //////
-  Future<void> likePost(String postId,token,user,postOwnerId) async {
+  Future<void> likePost(String postId,token,currentUserName,postOwnerId) async {
     final userId = auth.currentUser?.uid.toString() ?? "";
 
     if (userId.isNotEmpty) {
@@ -211,7 +211,7 @@ class ActionProvider extends ChangeNotifier {
         'isLiked': true,
       });
      _uploadNotification(
-          token,  user,  postOwnerId,  postId
+          token,  currentUserName,  postOwnerId,  postId
      );
 
     }
@@ -242,12 +242,12 @@ class ActionProvider extends ChangeNotifier {
   }
 
   // Toggle like/unlike
-  Future<void> toggleLike(String postId, List<String> likes,String user,token,postOwnerId) async {
+  Future<void> toggleLike(String postId, List<String> likes,String currentUserName,token,postOwnerId) async {
     final userId = auth.currentUser?.uid ?? "";
     if (likes.contains(userId)) {
       await unlikePost(postId);
     } else {
-      await likePost(postId,token,user,postOwnerId);
+      await likePost(postId,token,currentUserName,postOwnerId);
 
     }
     notifyListeners(); // Trigger rebuild to update icon
@@ -566,20 +566,20 @@ class ActionProvider extends ChangeNotifier {
     }
   }
 
-  void _uploadNotification(String token, String user, String postOwnerId, String postId) {
+  void _uploadNotification(String token, String currentUserName, String postOwnerId, String postId) {
     // Send the notification via FCM
     FCMService().sendNotification(
       token,
       'A New Notification!',
-      '$user liked your post',
+      '$currentUserName liked your post',
       currentUser,
     );
 
     // Save the notification in Firestore
     _saveNotificationToFirestore(
       recipientId: postOwnerId,
-      senderId: currentUser, // Current user who liked the post
-      message: '$user liked your post',
+      senderId: currentUser,
+      message: '$currentUserName liked your post',
       postId: postId,
       type: 'like',
       //save the user name and photo too
@@ -594,10 +594,13 @@ class ActionProvider extends ChangeNotifier {
     required String type,
   }) async {
     try {
-      var id = FirebaseFirestore.instance.collection('notifications').id;
-      await FirebaseFirestore.instance.collection('notifications')
-          .doc(id).set({
-        'id': id,
+      var notificationRef = FirebaseFirestore.instance.collection('users')
+          .doc(recipientId)
+          .collection('notifications')
+          .doc();
+
+      await notificationRef.set({
+        'id': notificationRef.id,  // Set the document ID here
         'recipientId': recipientId,
         'senderId': senderId,
         'message': message,
@@ -606,9 +609,7 @@ class ActionProvider extends ChangeNotifier {
         'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
       });
     } catch (e) {
-      print('Error saving notification: $e');
+      log('Error saving notification: $e');
     }
   }
-
-
 }

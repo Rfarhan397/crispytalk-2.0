@@ -291,5 +291,32 @@ class StreamDataProvider extends ChangeNotifier {
     return members;
   }
 
+  Stream<List<Map<String, dynamic>>> getNotificationsWithUserDetails(String recipientId) {
+    return FirebaseFirestore.instance.collection('users').doc(currentUser)
+        .collection('notifications')
+        .where('recipientId', isEqualTo: recipientId)
+        .snapshots()
+        .asyncMap((notificationSnapshot) async {
+      List<Map<String, dynamic>> notificationsWithUserDetails = [];
 
+      for (var doc in notificationSnapshot.docs) {
+        var notificationData = doc.data();
+        notificationData['id'] = doc.id;
+
+        // Fetch sender details
+        String senderId = notificationData['senderId'];
+        DocumentSnapshot senderSnapshot = await FirebaseFirestore.instance.collection('users').doc(senderId).get();
+
+        if (senderSnapshot.exists) {
+          var senderData = senderSnapshot.data() as Map<String, dynamic>;
+          notificationData['senderName'] = senderData['name'] ?? "Unknown";
+          notificationData['senderProfileUrl'] = senderData['profileUrl'] ?? "";
+        }
+
+        notificationsWithUserDetails.add(notificationData);
+      }
+
+      return notificationsWithUserDetails;
+    });
+  }
 }

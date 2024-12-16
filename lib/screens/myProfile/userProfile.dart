@@ -28,8 +28,7 @@ class UserProfile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    final menuProvider =
-    Provider.of<ActionProvider>(context); // Access provider
+    final menuProvider = Provider.of<ActionProvider>(context); // Access provider
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.white,
@@ -147,7 +146,6 @@ class UserProfileCurrentUser extends StatelessWidget {
             if (!snapshot.hasData || !snapshot.data!.exists) {
               return const Center(child: Text("User not found"));
             }
-
             final userData = UserModelT.fromMap(
                 snapshot.data!.data() as Map<String, dynamic>);
 
