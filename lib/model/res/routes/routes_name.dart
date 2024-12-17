@@ -28,6 +28,7 @@ class RoutesName{
   static const showMedia = "/showMedia";
   static const blockedUsers = "/blockedUsersScreen";
   static const groupChat = "/groupChatScreen";
+  static const editGroupDetails = "/editGroupDetails";
 
 
 }

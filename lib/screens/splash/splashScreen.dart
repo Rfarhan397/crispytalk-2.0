@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../model/res/constant/app_assets.dart';
+import '../../provider/current_user/current_user_provider.dart';
 import '../../provider/stream/streamProvider.dart';
 import '../login/loginScreen.dart';
 import '../mainScreen/mainScreen.dart';
@@ -21,6 +22,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     _navigateToNextScreen();
     StreamDataProvider().updateFcmToken();
+
   }
 
   Future<void> _navigateToNextScreen() async {

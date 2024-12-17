@@ -1,7 +1,6 @@
 import 'dart:developer';
-import 'dart:typed_data';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -9,7 +8,6 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import 'package:video_player/video_player.dart';
-
 import '../../constant.dart';
 import '../../model/mediaPost/mediaPost_model.dart';
 import '../../model/res/components/app_button_widget.dart';
@@ -18,8 +16,8 @@ import '../../model/res/constant/app_colors.dart';
 import '../../model/res/constant/app_icons.dart';
 import '../../model/res/routes/routes_name.dart';
 import '../../model/res/widgets/app_text.dart.dart';
-import '../../model/user_model/user_model.dart';
 import '../../provider/action/action_provider.dart';
+import '../../provider/current_user/current_user_provider.dart';
 import '../video/mediaViewerScreen.dart';
 
 class UserProfile extends StatelessWidget {
@@ -27,7 +25,6 @@ class UserProfile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final menuProvider = Provider.of<ActionProvider>(context); // Access provider
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -129,52 +126,37 @@ class UserProfileCurrentUser extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentUserProvider = Provider.of<CurrentUserProvider>(context);
+    final userData = currentUserProvider.currentUser;
+
+    if (userData == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Fetch user details from Firestore
-        StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('users')
-              .doc(userUid)
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (!snapshot.hasData || !snapshot.data!.exists) {
-              return const Center(child: Text("User not found"));
-            }
-            final userData = UserModelT.fromMap(
-                snapshot.data!.data() as Map<String, dynamic>);
-
-            return Column(
-              children: [
-                BackgroundImage(profileUrl: userData.bgUrl),
-                ProfileImage(profileUrl: userData.profileUrl),
-                Transform.translate(
-                  offset: Offset(0, -7.h), // Reduce offset if needed
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      UserDetails(name: userData.name, bio: userData.bio),
-                      FollowAndActionButtons(
-                        followers: userData.followers,
-                        following: userData.following,
-                        likes: userData.likes,
-                      ),
-                      const SizedBox(height: 10),
-                      ProfileActions(), // Profile Actions widget
-                      SizedBox(height: 2.h),
-
-                      _MediaWrap(userUid: userData.userUid),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          },
+        BackgroundImage(profileUrl: userData.bgUrl),
+        ProfileImage(profileUrl: userData.profileUrl),
+        Transform.translate(
+          offset: Offset(0, -7.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Align(
+                  alignment: Alignment.center,
+                  child: UserDetails(name: userData.name, bio: userData.bio)),
+              FollowAndActionButtons(
+                followers: userData.followers,
+                following: userData.following,
+                likes: userData.likes,
+              ),
+              const SizedBox(height: 10),
+              ProfileActions(), // Profile Actions widget
+              SizedBox(height: 2.h),
+              _MediaWrap(userUid: userData.userUid),
+            ],
+          ),
         ),
       ],
     );
@@ -398,51 +380,59 @@ class _MediaWrap extends StatelessWidget {
             .toList();
         String mediaType = '';
         String determineMediaType(String url) {
-          if (RegExp(r'\.jpe?g$|\.png$', caseSensitive: false).hasMatch(url)) {
+          if (
+          RegExp(r'\.jpe?g$|\.png$',
+              caseSensitive: false)
+              .hasMatch(url)) {
             return 'image';
-          } else if (RegExp(r'\.mov|\.avi|\.mp4$', caseSensitive: false)
+          } else if (
+          RegExp(r'\.mov|\.avi|\.mp4$',
+              caseSensitive: false,
+          )
               .hasMatch(url)) {
             return 'video';
           }
           return 'unknown';
         }
 
-        return Wrap(
-               alignment: WrapAlignment.start,
-          spacing: 10, // Horizontal space between items
-          runSpacing: 20, // Vertical space between lines
-          children: mediaList.map((media) {
-            final mediaType = determineMediaType(media.mediaUrl);
-            return GestureDetector(
-              onTap: () {
-                if (media.mediaUrl.isNotEmpty) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          VideoPlayerScreen(videoUrl: media.mediaUrl),
-                    ),
-                  );
-                }
-              },
-              child: Container(
-                height: 200,
-                width: MediaQuery.of(context).size.width / 2 -
-                    15, // Half width with some padding
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
-                  color: Colors.black12,
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Wrap(
+                 alignment: WrapAlignment.start,
+            spacing: 10,
+            runSpacing: 20,
+            children: mediaList.map((media) {
+              final mediaType = determineMediaType(media.mediaUrl);
+              return GestureDetector(
+                onTap: () {
+                  if (media.mediaUrl.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            VideoPlayerScreen(videoUrl: media.mediaUrl),
+                      ),
+                    );
+                  }
+                },
+                child: Container(
+                  height: 200,
+                  width: MediaQuery.of(context).size.width / 2 -
+                      15,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    color: Colors.black12,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child: mediaType == "image"
+                            ? CachedShimmerImageWidget(imageUrl: media.mediaUrl)
+                            : VideoThumbnail(videoUrl: media.mediaUrl,)
+                  ),
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(15),
-                  child: media.mediaUrl.isNotEmpty
-                      ? mediaType == "image"
-                          ? Image.network(media.mediaUrl, fit: BoxFit.cover)
-                          :VideoThumbnail(videoUrl: media.mediaUrl,)                      : const Icon(Icons.broken_image, color: Colors.grey),
-                ),
-              ),
-            );
-          }).toList(),
+              );
+            }).toList(),
+          ),
         );
       },
     );

@@ -65,7 +65,7 @@ class ChatListScreen extends StatelessWidget {
                             child: GestureDetector(
                               onTap: () {
                                 _searchController.clear();
-                                provider.searchUsers(''); // Reset search when clear is clicked
+                                provider.searchUsers('');
                               },
                               child: SvgPicture.asset(AppIcons.close),
                             ),
@@ -79,27 +79,7 @@ class ChatListScreen extends StatelessWidget {
                           onTap: () {Get.toNamed(RoutesName.createGroup);
                           },
                           child: SvgPicture.asset(AppIcons.createGroup)),
-                    )
-                    // PopupMenuButton<String>(
-                    //   color: primaryColor,
-                    //   icon: SvgPicture.asset(AppIcons.menu),
-                    //   onSelected: (value) {
-                    //     menuProvider.setSelectedItem(value);
-                    //     // Handle actions for the menu
-                    //     if (value == 'Create new Group') {
-                    //       Get.toNamed(RoutesName.createGroup);
-                    //       log('Create new Group selected');
-                    //     } else if (value == 'Old Groups') {
-                    //       log('Old Groups selected');
-                    //     }
-                    //   },
-                    //   itemBuilder: (BuildContext context) {
-                    //     return [
-                    //       buildMenuItem(context, 'Create new Group', menuProvider),
-                    //       buildMenuItem(context, 'Old Groups', menuProvider),
-                    //     ];
-                    //   },
-                    // ),
+                    ),
                   ],
                 ),
               ),
@@ -143,73 +123,6 @@ class ChatListScreen extends StatelessWidget {
                         lastMessage: chat.lastMessage,
                         createdAt: chat.createdAt,
                       );
-                      // return Padding(
-                      //   padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      //   child: ListTile(
-                      //     splashColor: Color(0xffFEE3C8),
-                      //     onTap: () {
-                      //       //Get.toNamed(RoutesName.chatScreen,arguments: user);
-                      //     },
-                      //     leading: Stack(
-                      //       clipBehavior: Clip.hardEdge,
-                      //       children: [
-                      //         CircleAvatar(
-                      //           radius: 25,
-                      //           backgroundImage: AssetImage(chat.toString()),
-                      //         ),
-                      //         Positioned(
-                      //           bottom: 2,
-                      //           right: 3,
-                      //           child: Container(
-                      //             width: 12,
-                      //             height: 12,
-                      //             decoration: const BoxDecoration(
-                      //               color: Colors.green,
-                      //               shape: BoxShape.circle,
-                      //             ),
-                      //           ),
-                      //         ),
-                      //       ],
-                      //     ),
-                      //     title: AppTextWidget(
-                      //       text: chat.users.toString(),
-                      //       fontSize: 16,
-                      //       textAlign: TextAlign.start,
-                      //       fontWeight: FontWeight.w500,
-                      //     ),
-                      //     subtitle: AppTextWidget(
-                      //       text: chat.lastMessage.toString(),
-                      //       fontSize: 10,
-                      //       textAlign: TextAlign.start,
-                      //       fontWeight: FontWeight.w300,
-                      //     ),
-                      //     trailing: Column(
-                      //       crossAxisAlignment: CrossAxisAlignment.end,
-                      //       children: [
-                      //          AppTextWidget(
-                      //           text: chat.createdAt,
-                      //           fontSize: 10,
-                      //           textAlign: TextAlign.start,
-                      //         ),
-                      //         SizedBox(height: 2.2.h),
-                      //         Container(
-                      //           height: 15,
-                      //           width: 15,
-                      //           decoration: BoxDecoration(
-                      //             color: primaryColor,
-                      //             borderRadius: BorderRadius.circular(50),
-                      //           ),
-                      //           child: const Center(
-                      //             child: AppTextWidget(
-                      //               text: '3',
-                      //               color: Colors.white,
-                      //             ),
-                      //           ),
-                      //         ),
-                      //       ],
-                      //     ),
-                      //   ),
-                      // );
                     },
                   );
                 },

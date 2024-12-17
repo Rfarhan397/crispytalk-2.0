@@ -1,7 +1,11 @@
 
 import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crispy/model/res/constant/app_utils.dart';
+import 'package:crispy/model/res/routes/routes_name.dart';
+import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
+import 'package:crispy/model/res/widgets/customDialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
@@ -13,9 +17,11 @@ import '../../../model/chatMessage/chatMessageModel.dart';
 import '../../../model/res/constant/app_assets.dart';
 import '../../../model/res/constant/app_icons.dart';
 import '../../../model/res/widgets/app_text.dart.dart';
+import '../../../model/res/widgets/button_widget.dart';
 import '../../../model/services/fcm/fcm_services.dart';
 import '../../../provider/action/action_provider.dart';
 import '../../../provider/chat/chatProvider.dart';
+import '../../../provider/profile/profileProvider.dart';
 import '../../../provider/stream/streamProvider.dart';
 import '../../call/audioCall/audio.dart';
 import '../Groups/groupList.dart';
@@ -32,35 +38,50 @@ class GroupChatScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final action = Provider.of<ActionProvider>(context, listen: false);
+    final profile = Provider.of<ProfileProvider>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: primaryColor,
         shadowColor: primaryColor,
-        centerTitle: false,
+        centerTitle: false, 
         leading: GestureDetector(
             onTap: () {
-              Get.to(GroupListScreen());
+              Get.back();
             },
             child: const Icon(Icons.arrow_back_ios,
                 size: 18, color: Colors.white)),
-        title: ListTile(
-          contentPadding: const EdgeInsets.all(0),
-          leading: Container(
-            height: 50,
-            width: 50,
-            decoration: BoxDecoration(
-                color: whiteColor, borderRadius: BorderRadius.circular(50)),
-            child: ClipRRect(
-                borderRadius: BorderRadius.circular(50),
-                child: groupImage.isNotEmpty
-                    ? Image.network(groupImage)
-                    : Image.asset(fit: BoxFit.cover, AppAssets.noProfile)),
-          ),
-          title: AppTextWidget(
-            text: groupName.isNotEmpty ? groupName : 'Unknown',
-            textAlign: TextAlign.start,
-            color: Colors.white,
-            fontSize: 15,
+        title: GestureDetector(
+          onTap: () async {
+
+            Get.toNamed(RoutesName.editGroupDetails,
+            arguments: {
+              'groupName': groupName,
+              'groupImage': groupImage,
+              'groupID': groupID,
+
+
+            }
+            );
+          },
+          child: ListTile(
+            contentPadding: const EdgeInsets.all(0),
+            leading: Container(
+              height: 50,
+              width: 50,
+              decoration: BoxDecoration(
+                  color: whiteColor, borderRadius: BorderRadius.circular(50)),
+              child: ClipRRect(
+                  borderRadius: BorderRadius.circular(50),
+                  child: groupImage.isNotEmpty
+                      ? Image.network(groupImage)
+                      : Image.asset(fit: BoxFit.cover, AppAssets.noProfile)),
+            ),
+            title: AppTextWidget(
+              text: groupName.isNotEmpty ? groupName : 'Unknown',
+              textAlign: TextAlign.start,
+              color: Colors.white,
+              fontSize: 15,
+            ),
           ),
         ),
         actions: [
@@ -88,7 +109,7 @@ class GroupChatScreen extends StatelessWidget {
                 stream: value.getGroupMessages(groupID),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(
+                    return const Center(
                         child: CircularProgressIndicator(
                           color: primaryColor,
                         ));
@@ -97,7 +118,7 @@ class GroupChatScreen extends StatelessWidget {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   }
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text('No Messages available'));
+                    return const Center(child: Text('No Messages available'));
                   }
                   final messages = snapshot.data ?? [];
 
@@ -117,10 +138,6 @@ class GroupChatScreen extends StatelessWidget {
               );
             }),
           ),
-          // _buildMessageInputField(context,
-          // messageController,
-          //
-          // ),
           MessageInputField(
             controller: messageController,
             groupID: groupID,
@@ -128,6 +145,95 @@ class GroupChatScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _showEditNameDialog(BuildContext context) {
+    TextEditingController nameController = TextEditingController(text: groupName);
+    MyCustomDialog.show(
+      title: 'Edit Group Name',
+      showTextField: true,
+      content: "Change Group Name",
+      cancel: "Cancel",
+      yes: "Save",
+      hintText: 'Enter Group Name',
+      color: Colors.black,
+      showTitle: true,
+      textController: nameController,
+      cancelTap: () {
+        Get.back();
+      },
+      yesTap: () async {
+        try {
+          if (nameController.text.trim().isEmpty) {
+            AppUtils().showToast(text: 'Please enter a group name');
+            return;
+          }
+
+          await FirebaseFirestore.instance
+              .collection('groupChats')
+              .doc(groupID)
+              .update({
+            'groupName': nameController.text.trim()
+          });
+
+          AppUtils().showToast(text: 'Group name updated successfully');
+          Get.back();
+        } catch (e) {
+          log('Error updating group name: $e');
+          AppUtils().showToast(text: 'Error updating group name');
+        }
+      },
+    );
+  }
+
+  void _showImagePicker(BuildContext context, ProfileProvider provider) {
+    Get.bottomSheet(
+      Container(
+        width: 100.w,
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: primaryColor,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 50,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(100),
+                child: CachedShimmerImageWidget(imageUrl: provider.imageUrl.toString()),
+              
+              ) ,
+            ),
+            ButtonWidget(
+              height: 5.h,
+              width: 40.w,
+              fontWeight: FontWeight.w400,
+              text: "Gallery",
+              onClicked: provider.pickProfileImage,
+            ),
+            const SizedBox(height: 20),
+            ButtonWidget(
+              height: 5.h,
+              width: 40.w,
+              fontWeight: FontWeight.w400,
+              text: "Camera",
+              onClicked: provider.pickProfileImageFromCamera,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  void _showAddMembersDialog(BuildContext context) {
+    // Add implementation for adding members
+  }
+
+  void _showRemoveMembersDialog(BuildContext context) {
+    // Add implementation for removing members
   }
 
   // Message Bubble

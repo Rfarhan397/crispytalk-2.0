@@ -333,9 +333,10 @@ class _CreateGroupState extends State<CreateGroup> {
       return;
     }
 
-    // Debugging: Print selected users
-    for (var user in provider.selectedUsers) {
-      print('Selected User: Name: ${user.name}, ID: ${user.userUid}, Profile URL: ${user.profileUrl}');
+    // Check if group image is selected
+    if (profile.profileImage == null) {
+      AppUtils().showToast(text: 'Please select a group image.',bgColor:  Colors.red);
+      return;
     }
 
     try {
@@ -385,6 +386,7 @@ class _CreateGroupState extends State<CreateGroup> {
   void _showImagePicker(BuildContext context, ProfileProvider provider) {
     Get.bottomSheet(
       Container(
+        width: 100.w,
         padding: const EdgeInsets.all(20),
         decoration: const BoxDecoration(
           color: primaryColor,

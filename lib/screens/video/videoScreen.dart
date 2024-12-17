@@ -1,4 +1,4 @@
-import 'dart:developer';
+  import 'dart:developer';
 
 import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
 import 'package:crispy/screens/video/videoWidget.dart';
@@ -19,6 +19,7 @@ import '../../model/res/constant/app_assets.dart';
 import '../../model/res/constant/app_icons.dart';
 import '../../model/res/widgets/app_text.dart.dart';
 import '../../provider/action/action_provider.dart';
+import '../../provider/current_user/current_user_provider.dart';
 import '../../provider/stream/streamProvider.dart';
 import '../../provider/user_provider/user_provider.dart';
 import '../../provider/video/videoProvider.dart';
@@ -34,18 +35,28 @@ class VideoScreen extends StatelessWidget {
   final int? index;
   final String? imagePath;
   final bool hasBackBtn;
-  VideoScreen({super.key, this.index, this.imagePath,this.hasBackBtn = false}); // Specify type here
+  VideoScreen({super.key, this.index, this.imagePath,this.hasBackBtn = false});
 
   @override
   Widget build(BuildContext context) {
-    final PageController pageController = PageController(initialPage: index!);
+    final PageController pageController = PageController(initialPage: index ?? 0);
     return Scaffold(
       backgroundColor: Colors.black,
       body: ChangeNotifierProvider(
         create: (_) => VideoProvider(),
 
-        child: Consumer<VideoProvider>(
-            builder: (context, videoProvider, _) {
+        child: Consumer2<VideoProvider,CurrentUserProvider>(
+            builder: (context, videoProvider, currentUserProvider, _) {
+              if (currentUserProvider.currentUser == null) {
+                currentUserProvider.fetchCurrentUserDetails();
+                return const Center(child: CircularProgressIndicator(color: primaryColor,));
+              }
+
+              final currentUser = currentUserProvider.currentUser?.userUid;
+              if (currentUser == null) {
+                return const Center(child: Text("Unable to load user data", style: TextStyle(color: Colors.white)));
+              }
+
               return Stack(
                 children: [
                   StreamBuilder(
@@ -78,13 +89,13 @@ class VideoScreen extends StatelessWidget {
 
                       return PageView.builder(
                         scrollDirection: Axis.vertical,
-                        itemCount: videoItems.length, // Set itemCount to the filtered list length
+                        itemCount: videoItems.length,
                         controller: pageController,
                         onPageChanged: (index) {
                           videoProvider.setSelectedIndex(index);
                         },
                         itemBuilder: (context, index) {
-                          final video = videoItems[index]; // Use the filtered list here
+                          final video = videoItems[index];
                           final mediaUrl = video.mediaUrl.toString();
 
                           return Stack(
@@ -100,9 +111,7 @@ class VideoScreen extends StatelessWidget {
                                 child: Column(
                                   children: [
                                     GestureDetector(
-                                      onTap: () {
-
-                                      },
+                                      onTap: () {},
                                       child: Column(
                                         children: [
                                           SizedBox(
@@ -110,7 +119,7 @@ class VideoScreen extends StatelessWidget {
                                             height: 40,
                                             child: ClipRRect(
                                               borderRadius: BorderRadius.circular(100),
-                                              child: CachedShimmerImageWidget(imageUrl: video.userDetails!.profileUrl)
+                                              child: CachedShimmerImageWidget(imageUrl: video.userDetails?.profileUrl ?? '')
                                             ),
                                           ),
                                         ],
@@ -121,17 +130,15 @@ class VideoScreen extends StatelessWidget {
                                     // Heart Icon
                                     GestureDetector(
                                       onTap: () {
-                                        final currentUserName = Provider.of<UserProvider>(context, listen: false).users[1];  // Assuming you have a UserProvider that provides the current user's name
-
-                                        Provider.of<ActionProvider>(context, listen: false)
-                                            .toggleLike(video.timeStamp,
-                                          video.likes,
-                                          currentUserName.toString(),
-                                          // changing name,
-                                          video.userDetails!.fcmToken,
-                                          video.userUid,
-                                        );
-
+                                        if (video.userDetails?.fcmToken != null) {
+                                          Provider.of<ActionProvider>(context, listen: false)
+                                              .toggleLike(video.timeStamp,
+                                            video.likes,
+                                            currentUserProvider.currentUser?.name ?? 'N/A'        ,
+                                            video.userDetails!.fcmToken,
+                                            video.userUid,
+                                          );
+                                        }
                                       },
                                       child: Column(
                                         children: [
@@ -224,12 +231,14 @@ class VideoScreen extends StatelessWidget {
                                 left: 10,
                                 child: GestureDetector(
                                   onTap:() {
-                                    Get.to(
-                                        OtherUserProfile(
-                                          userID: video.userDetails!.userUid,
-                                          userName: video.userDetails!.name,
-                                        ),
-                                    );
+                                    if (video.userDetails?.userUid != null) {
+                                      Get.to(
+                                          OtherUserProfile(
+                                            userID: video.userDetails!.userUid,
+                                            userName: video.userDetails?.name ?? 'Unknown',
+                                          ),
+                                      );
+                                    }
                                   },
                                   child: SizedBox(
                                     child: Column(
@@ -282,9 +291,9 @@ class VideoScreen extends StatelessWidget {
 
   Widget BuildBottomSheet(context, postId) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.6, // Start with 60% of the screen height
-      minChildSize: 0.3, // Minimum size the sheet can shrink to
-      maxChildSize: 0.9, // Maximum size the sheet can expand to
+      initialChildSize: 0.6,
+      minChildSize: 0.3,
+      maxChildSize: 0.9,
       builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(

@@ -15,8 +15,10 @@ import '../../model/res/constant/app_utils.dart';
 import '../../model/res/widgets/app_text.dart.dart';
 import '../../model/res/widgets/app_text_field.dart';
 import '../../model/res/widgets/button_widget.dart';
+import '../../model/res/widgets/hover_button_loader.dart';
 import '../../provider/action/action_provider.dart';
 import '../../provider/profile/profileProvider.dart';
+import '../../provider/current_user/current_user_provider.dart';
 
 class EditProfile extends StatelessWidget {
   EditProfile({super.key});
@@ -29,8 +31,20 @@ class EditProfile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profileProvider = Provider.of<ProfileProvider>(context, listen: true);
+    final currentUserProvider = Provider.of<CurrentUserProvider>(context);
+    final userData = currentUserProvider.currentUser;
     Color greyColor = const Color(0xffD9D9D9);
 
+    // Initialize controllers with current user data
+    if (userData != null) {
+      nameController.text = userData.name;
+      bioController.text = userData.bio ?? '';
+      instaController.text = userData.instagram ?? '';
+      fbController.text = userData.facebook ?? '';
+      if (userData.gender != null && userData.gender!.isNotEmpty) {
+        profileProvider.setGender(userData.gender!);
+      }
+    }
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -62,9 +76,10 @@ class EditProfile extends StatelessWidget {
                     },
                     child: Stack(
                       children: [
-                        value.backgroundImage != null
-                            ? Image.file(value.backgroundImage!, fit: BoxFit.cover,)
-                            : const SizedBox(),
+                        if (value.backgroundImage != null)
+                          Image.file(value.backgroundImage!, fit: BoxFit.cover, width: double.infinity)
+                        else if (userData?.bgUrl != null && userData!.bgUrl.isNotEmpty)
+                          Image.network(userData.bgUrl, fit: BoxFit.cover, width: double.infinity),
                         Positioned(
                           bottom: 5.h,
                           left: 25.w,
@@ -114,13 +129,15 @@ class EditProfile extends StatelessWidget {
                               borderRadius: BorderRadius.circular(50),
                               child: value.profileImage != null
                                   ? Image.file(value.profileImage!, fit: BoxFit.cover, width: 100.w)
-                                  : Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: SvgPicture.asset(
-                                  AppIcons.camera,
-                                  color: Colors.black12,
-                                ),
-                              ),
+                                  : userData?.profileUrl != null && userData!.profileUrl.isNotEmpty
+                                      ? Image.network(userData.profileUrl, fit: BoxFit.cover, width: 100.w)
+                                      : Padding(
+                                          padding: const EdgeInsets.all(12.0),
+                                          child: SvgPicture.asset(
+                                            AppIcons.camera,
+                                            color: Colors.black12,
+                                          ),
+                                        ),
                             ),
                           ),
                           Container(
@@ -160,7 +177,7 @@ class EditProfile extends StatelessWidget {
                     child: AppTextField(
                       controller: nameController,
                       radius: 8,
-                      hintText: nameController.text.isEmpty ? "Enter Name" : nameController.text,
+                      hintText: "Enter Name",
                     ),
                   ),
                 ],
@@ -169,49 +186,49 @@ class EditProfile extends StatelessWidget {
 
             // Bio Field
             buildUserInfo("Bio:", "Edit your bio", 11.w, bioController),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 6.w),
-          child: Row(
-            children: [
-              AppTextWidget(
-                text: 'Gender:',
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-                fontSize: 18,
-              ),
-              Row(
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 6.w),
+              child: Row(
                 children: [
-                  Radio<String>(
-                    activeColor: primaryColor,
-                    value: 'male',
-                    groupValue: profileProvider.selectedGender,
-                    onChanged: (String? value) {
-                      if (value != null) {
-                        profileProvider.setGender(value); // Updates the provider state
-                      }
-                    },
+                  AppTextWidget(
+                    text: 'Gender:',
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                    fontSize: 18,
                   ),
-                  Text('Male'),
+                  Row(
+                    children: [
+                      Radio<String>(
+                        activeColor: primaryColor,
+                        value: 'male',
+                        groupValue: profileProvider.selectedGender,
+                        onChanged: (String? value) {
+                          if (value != null) {
+                            profileProvider.setGender(value);
+                          }
+                        },
+                      ),
+                      Text('Male'),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Radio<String>(
+                        activeColor: primaryColor,
+                        value: 'female',
+                        groupValue: profileProvider.selectedGender,
+                        onChanged: (String? value) {
+                          if (value != null) {
+                            profileProvider.setGender(value);
+                          }
+                        },
+                      ),
+                      Text('Female'),
+                    ],
+                  ),
                 ],
               ),
-              Row(
-                children: [
-                  Radio<String>(
-                    activeColor: primaryColor,
-                    value: 'female',
-                    groupValue: profileProvider.selectedGender,
-                    onChanged: (String? value) {
-                      if (value != null) {
-                        profileProvider.setGender(value); // Updates the provider state
-                      }
-                    },
-                  ),
-                  Text('Female'),
-                ],
-              ),
-            ],
-          ),
-        ),
+            ),
             SizedBox(height: 2.h),
 
             // Social Links
@@ -239,17 +256,19 @@ class EditProfile extends StatelessWidget {
             SizedBox(height: 2.h),
 
             // Save Button
-            Padding(
-              padding: EdgeInsets.only(right: 7.w),
-              child: AppButtonWidget(
-                radius: 8,
-                width: 25.w,
-                height: 5.h,
-                alignment: Alignment.centerRight,
-                onPressed: () {
-                  uploadProfile(context);
-                },
-                text: 'Save',
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: EdgeInsets.only(right: 7.w),
+                child: HoverLoadingButton(
+                  radius: 8,
+                  width: 25.w,
+                  height: 5.h,
+                  onClicked: () async {
+                    uploadProfile(context);
+                  },
+                  text: 'Save',
+                ),
               ),
             ),
           ],
@@ -320,60 +339,54 @@ class EditProfile extends StatelessWidget {
 
   void uploadProfile(BuildContext context) async {
     var profile = Provider.of<ProfileProvider>(context, listen: false);
+    var currentUserProvider = Provider.of<CurrentUserProvider>(context, listen: false);
     ActionProvider.startLoading();
 
     try {
-      // Map to store updated fields
       Map<String, dynamic> updateData = {};
 
-      // Check if profile image has been updated
       if (profile.profileImage != null) {
         Uint8List profileImageBytes = await profile.convertFileToUint8List(profile.profileImage!);
         await profile.uploadImage(profileImageBytes, type: "profile");
         updateData['profileUrl'] = profile.imageUrl;
       }
 
-      // Check if background image has been updated
       if (profile.backgroundImage != null) {
         Uint8List backgroundImageBytes = await profile.convertFileToUint8List(profile.backgroundImage!);
         await profile.uploadImage(backgroundImageBytes, type: "background");
         updateData['bgUrl'] = profile.imageUrl;
       }
 
-      // Update name if not empty
       if (nameController.text.trim().isNotEmpty) {
         updateData['name'] = nameController.text.trim();
       }
 
-      // Update bio if not empty
       if (bioController.text.trim().isNotEmpty) {
         updateData['bio'] = bioController.text.trim();
       }
 
-      // Update Instagram link if not empty
       if (instaController.text.trim().isNotEmpty) {
         updateData['instagram'] = instaController.text.trim();
       }
 
-      // Update Facebook link if not empty
       if (fbController.text.trim().isNotEmpty) {
         updateData['facebook'] = fbController.text.trim();
       }
+
       if (profile.selectedGender.isNotEmpty) {
         updateData['gender'] = profile.selectedGender;
       }
 
-      // If there are updates, send them to Firestore
-
       if (updateData.isNotEmpty) {
         await FirebaseFirestore.instance.collection('users').doc(currentUser).update(updateData);
+        await currentUserProvider.fetchCurrentUserDetails(); // Refresh user data
         AppUtils().showToast(text: 'Profile updated successfully!');
         profile.clear();
         nameController.clear();
         bioController.clear();
         instaController.clear();
         fbController.clear();
-
+        Get.back(); // Navigate back to profile screen
       } else {
         AppUtils().showToast(text: 'No changes detected.');
       }

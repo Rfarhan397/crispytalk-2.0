@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../screens/MediaSelection/MediaSelectionScreen.dart';
 import '../../../screens/MediaSelection/showMedia.dart';
 import '../../../screens/MediaSelection/uploadMedia.dart';
+import '../../../screens/chat/Groups/editGroupDetails/editGroupDetails.dart';
 import '../../../screens/chat/UsersChat/singleChat.dart';
 import '../../../screens/chat/chatListScreen/chatListScreen.dart';
 import '../../../screens/chat/createGroup/createGroup.dart';
@@ -59,6 +60,7 @@ class Routes {
     GetPage(name: RoutesName.uploadMedia, page: () => UploadMediaScreen(  )),
     GetPage(name: RoutesName.showMedia, page: () => ShowMedia()),
     GetPage(name: RoutesName.blockedUsers, page: () => BlockedUserScreen()),
+    GetPage(name: RoutesName.editGroupDetails, page: () => EditGroupDetailsScreen()),
     // GetPage(name: RoutesName.groupChat, page: () => GroupChatScreen()),
 
   ];

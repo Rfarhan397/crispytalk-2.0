@@ -57,7 +57,7 @@ class CustomDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(10.0), // Optional: for rounded corners
       ),
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: 400), // Set a maximum height
+        constraints: const BoxConstraints(maxHeight: 400), // Set a maximum height
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -175,6 +175,7 @@ class MyCustomDialog extends StatelessWidget {
   final TextEditingController? textController;
   final bool showTextField, showTitle;
   final VoidCallback cancelTap,yesTap;
+  final Color? hintColor;
 
   MyCustomDialog({
     super.key,
@@ -188,8 +189,8 @@ class MyCustomDialog extends StatelessWidget {
     this.showTitle = false,
     required this.cancelTap,
     required this.yesTap,
+     this.hintColor,
   });
-  TextEditingController controller = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -200,7 +201,7 @@ class MyCustomDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(10.0), // Optional: for rounded corners
       ),
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: 400), // Set a maximum height
+        constraints: const BoxConstraints(maxHeight: 400), // Set a maximum height
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -226,7 +227,8 @@ class MyCustomDialog extends StatelessWidget {
                     child: AppTextField(
                       radius: 8,
                       hintText: hintText ?? '',
-                      controller: controller, // Use the controller if provided
+                      hintColor: hintColor,
+                      controller: textController, // Use the controller if provided
                     ),
                   ),
                 SizedBox(height: 1.h),
@@ -290,6 +292,7 @@ class MyCustomDialog extends StatelessWidget {
     bool showTextField = false,
     TextEditingController? textController,
     String? hintText,
+    Color? color,
     String? title,
     bool showTitle = false,
     required VoidCallback cancelTap,
@@ -304,6 +307,7 @@ class MyCustomDialog extends StatelessWidget {
         textController: textController,
         hintText: hintText,
         title: title,
+        hintColor: color,
         showTitle: showTitle, cancelTap: cancelTap, yesTap: yesTap,
       ),
     );

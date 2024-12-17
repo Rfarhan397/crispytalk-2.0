@@ -39,14 +39,6 @@ class StreamDataProvider extends ChangeNotifier {
    return UserModelT.fromMap(data.data()!);
   }
 
-  // Stream<List<CommentModel>> getComments(postId) {
-  //   return FirebaseFirestore.instance.collection('posts').doc(postId).collection('comments').snapshots().map((snapshot) {
-  //     return snapshot.docs.map((doc) {
-  //       return CommentModel.fromMap(doc.data());
-  //     }).toList();
-  //   });
-  // }
-
   Stream<List<CommentWithUser>> getCommentsWithUserDetails(String postId) {
     return FirebaseFirestore.instance
         .collection('posts')
@@ -235,7 +227,6 @@ class StreamDataProvider extends ChangeNotifier {
       return querySnapshot.docs
           .map((doc) {
         final group = Group.fromFirestore(doc.data() as Map<String, dynamic>);
-        // Filter groups where the current user is a member
         return group.members.contains(currentUserUid) ? group : null;
       })
           .where((group) => group != null)

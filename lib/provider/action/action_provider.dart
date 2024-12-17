@@ -250,7 +250,7 @@ class ActionProvider extends ChangeNotifier {
       await likePost(postId,token,currentUserName,postOwnerId);
 
     }
-    notifyListeners(); // Trigger rebuild to update icon
+    notifyListeners();
   }
 
 ////////////to save media post to firestore //////
