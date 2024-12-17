@@ -114,20 +114,20 @@ class ChatTileScreen extends StatelessWidget {
                 textAlign: TextAlign.start,
               ),
               SizedBox(height: 2.2.h),
-              Container(
-                height: 15,
-                width: 15,
-                decoration: BoxDecoration(
-                  color: const Color(0xffFEE3C8),
-                  borderRadius: BorderRadius.circular(50),
-                ),
-                child: const Center(
-                  child: AppTextWidget(
-                    text: '3',
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+              // Container(
+              //   height: 15,
+              //   width: 15,
+              //   decoration: BoxDecoration(
+              //     color: const Color(0xffFEE3C8),
+              //     borderRadius: BorderRadius.circular(50),
+              //   ),
+              //   child: const Center(
+              //     child: AppTextWidget(
+              //       text: '3',
+              //       color: Colors.white,
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         );

@@ -22,7 +22,6 @@ class ChatListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<UserProvider>(context);
     final chatProvider = Provider.of<ChatProvider>(context);
     return Scaffold(
       body: SafeArea(
@@ -55,7 +54,7 @@ class ChatListScreen extends StatelessWidget {
                               focusBdColor: Colors.transparent,
                               controller: _searchController,
                               onChanged: (value) {
-                                provider.searchUsers(value); // Trigger search
+                                chatProvider.searchChats(value);
                               },
                               hintText: "Search",
                             ),
@@ -65,7 +64,7 @@ class ChatListScreen extends StatelessWidget {
                             child: GestureDetector(
                               onTap: () {
                                 _searchController.clear();
-                                provider.searchUsers('');
+                                chatProvider.searchChats('');
                               },
                               child: SvgPicture.asset(AppIcons.close),
                             ),
@@ -90,7 +89,7 @@ class ChatListScreen extends StatelessWidget {
                 stream: chatProvider.getChatRooms(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: AppTextWidget(text: 'Loading...'));
+                    return const Center(child: AppTextWidget(text: 'Loading...'));
                   }
                   if (snapshot.hasError) {
                     return Center(
@@ -101,7 +100,7 @@ class ChatListScreen extends StatelessWidget {
                     );
                   }
                   if (snapshot.data!.isEmpty) {
-                    return Center(
+                    return const Center(
                       child: AppTextWidget(
                           text: 'No chats available.',
                           fontWeight: FontWeight.w600,
@@ -110,18 +109,36 @@ class ChatListScreen extends StatelessWidget {
                     );
                   }
                   final chats = snapshot.data ?? [];
+                  final filteredChats = _searchController.text.isEmpty
+                    ? chats
+                    : chats.where((chat) =>
+                        chat.lastMessage.toLowerCase().contains(_searchController.text.toLowerCase())).toList();
+
                   return ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: chats.length,
+                    itemCount: filteredChats.length,
                     itemBuilder: (context, index) {
-                      final chat = chats[index];
+                      final chat = filteredChats[index];
                       final otherUserId = chat.users.firstWhere((id) => id != currentUser);
-                      return ChatTileScreen(
-                        chatId: chat.users.firstWhere((id) => id != currentUser),
-                        otherUserId: otherUserId,
-                        lastMessage: chat.lastMessage,
-                        createdAt: chat.createdAt,
+                      return Dismissible(
+                        key: Key(chat.docId),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          color: Colors.red,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: const Icon(Icons.delete, color: Colors.white),
+                        ),
+                        onDismissed: (direction) {
+                          chatProvider.deleteChat('chats',chat.docId);
+                        },
+                        child: ChatTileScreen(
+                          chatId: chat.users.firstWhere((id) => id != currentUser),
+                          otherUserId: otherUserId,
+                          lastMessage: chat.lastMessage,
+                          createdAt: chat.createdAt,
+                        ),
                       );
                     },
                   );

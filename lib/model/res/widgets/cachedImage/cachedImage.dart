@@ -36,13 +36,18 @@ class CachedShimmerImageWidget extends StatelessWidget {
         ),
       ),
       errorWidget: (context, url, error) => Container(
-          width: width,
-          height: height,
-          color: Colors.grey[300],
-          child: showErrorIcon
-              ? Image.network('https://res.cloudinary.com/dtwnx4xvs/image/upload/v1733988062/noPerson_rnlki6.jpg')
-              : SizedBox.shrink()),
-    //     errorWidget: (context, url, error) => Container(
+        width: width,
+        height: height,
+        color: Colors.grey[300],
+        child: showErrorIcon
+            ? Image.asset(
+          AppAssets.noProfile, // Replace with your constant asset path
+          fit: BoxFit.cover,
+        )
+            : const SizedBox.shrink(),
+      ),
+
+      //     errorWidget: (context, url, error) => Container(
           // width: width,
           // height: height,
           // color: Colors.grey[300],

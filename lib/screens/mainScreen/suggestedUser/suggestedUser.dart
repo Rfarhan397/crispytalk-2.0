@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
+import 'package:crispy/provider/current_user/current_user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
@@ -71,31 +72,28 @@ class SuggestionList extends StatelessWidget {
 
   SuggestionList({required this.currentUserId, Key? key}) : super(key: key);
 
- Stream<List<DocumentSnapshot>> getSuggestedUsers() {
-  return _firestore.collection('users').doc(currentUserId).snapshots().asyncMap((userDoc) async {
-    if (!userDoc.exists) return [];
+  Stream<List<DocumentSnapshot>> getSuggestedUsers() {
+    return _firestore.collection('users').doc(currentUserId).snapshots().asyncMap((userDoc) async {
+      if (!userDoc.exists) return [];
 
-    final userData = userDoc.data() as Map<String, dynamic>;
-    final blockedUserIds = List<String>.from(userData['blocks'] ?? []);
-    final followingIds = List<String>.from(userData['following'] ?? []);
-    
-    // Combine all IDs to exclude (blocked users, following, and current user)
-    final excludeIds = {...blockedUserIds, ...followingIds, currentUserId};
+      final userData = userDoc.data() as Map<String, dynamic>;
+      final blockedUserIds = List<String>.from(userData['blocks'] ?? []);
+      final followingIds = List<String>.from(userData['following'] ?? []);
 
-    // If there are no IDs to exclude, just limit the query
-    if (excludeIds.isEmpty) {
-      return (await _firestore.collection('users')
-          .limit(10)
-          .get()).docs;
-    }
+      // Combine all IDs to exclude (blocked users, following, and current user)
+      final excludeIds = {...blockedUserIds, ...followingIds, currentUserId};
+      // Get all users first
+      final allUsers = await _firestore.collection('users').get();
+      
+      // Filter users manually
+      final filteredDocs = allUsers.docs.where((doc) {
+        final uid = doc.get('userUid') as String;
+        return !excludeIds.contains(uid);
+      }).take(10).toList();
 
-    // Use whereNotIn alone (Firestore allows up to 10 values in whereNotIn)
-    return (await _firestore.collection('users')
-        .where('userUid', whereNotIn: excludeIds.take(10).toList())
-        .limit(10)
-        .get()).docs;
-  });
-}
+      return filteredDocs;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -155,6 +153,8 @@ class SuggestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final current = Provider.of<CurrentUserProvider>(context, listen: false);
+
     return Container(
       width: 25.w,
       padding: const EdgeInsets.all(8),
@@ -174,7 +174,7 @@ class SuggestionCard extends StatelessWidget {
           ),
           SizedBox(height: 0.5.h),
           AppTextWidget(
-            text: username,
+            text: username.capitalizeFirst.toString(),
             fontSize: 13,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -199,8 +199,7 @@ class SuggestionCard extends StatelessWidget {
                 );
               }
 
-              final isFollowed = snapshot.hasData && 
-                               snapshot.data!.exists && 
+              final isFollowed = snapshot.hasData && snapshot.data!.exists &&
                                (snapshot.data!.data() as Map<String, dynamic>)['followers']?.contains(currentUser) == true;
 
               return AppButtonWidget(
@@ -208,10 +207,12 @@ class SuggestionCard extends StatelessWidget {
                 alignment: Alignment.center,
                 height: 3.h,
                 radius: 100,
-                buttonColor: isFollowed ? Colors.grey : primaryColor,
+                buttonColor: isFollowed ? primaryColor : Colors.grey,
                 textColor: Colors.white,
                 onPressed: () => Provider.of<ActionProvider>(context, listen: false)
-                    .toggleFollow(currentUser, userId),
+                    .toggleFollow(currentUser, userId).then((_){
+                  current.fetchCurrentUserDetails();
+                }),
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 text: isFollowed ? 'Following' : 'Follow',

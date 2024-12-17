@@ -310,4 +310,31 @@ class StreamDataProvider extends ChangeNotifier {
       return notificationsWithUserDetails;
     });
   }
+
+  //current user followers
+  Stream<List<UserModelT>> fetchCurrentUserFollowers(userUid,followType) {
+    return FirebaseFirestore.instance
+        .collection('users') // Go to users collection
+        .doc(userUid) // Fetch the current user's document
+        .snapshots() // Stream of the document
+        .asyncMap((snapshot) async {
+      if (!snapshot.exists || snapshot.data() == null) {
+        return [];
+      }
+
+      // Extract followers list (array of UIDs)
+      List<dynamic> followersUids = snapshot.data()![followType] ?? [];
+
+      // Fetch details of all users in the followers list
+      List<UserModelT> followersList = [];
+      for (String uid in followersUids) {
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        if (userDoc.exists && userDoc.data() != null) {
+          followersList.add(UserModelT.fromMap(userDoc.data()!));
+        }
+      }
+
+      return followersList; // Return the list of followers' details
+    });
+  }
 }

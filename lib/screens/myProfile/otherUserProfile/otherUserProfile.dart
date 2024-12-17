@@ -1,5 +1,7 @@
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
+import 'package:crispy/screens/ImageDetail/image_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
@@ -25,18 +27,16 @@ import '../../video/mediaViewerScreen.dart';
 import '../userProfile.dart';
 
 class OtherUserProfile extends StatelessWidget {
-  const OtherUserProfile({
-    super.key, 
-    required this.userID,
-    required this.userName
-  });
-  
+  const OtherUserProfile(
+      {super.key, required this.userID, required this.userName});
+
   final String userID;
   final String userName;
 
   @override
   Widget build(BuildContext context) {
-    final streamDataProvider = Provider.of<StreamDataProvider>(context, listen: false);
+    final streamDataProvider =
+        Provider.of<StreamDataProvider>(context, listen: false);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -54,11 +54,11 @@ class OtherUserProfile extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          
+
           if (!snapshot.hasData) {
             return const Center(child: Text("User not found"));
           }
-          
+
           return SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: UserProfileOtherUser(userModel: snapshot.data!),
@@ -113,7 +113,6 @@ class OtherUserProfile extends StatelessWidget {
         text: 'You have blocked $userName',
         bgColor: primaryColor,
       );
-
     } catch (e) {
       log("Error blocking user: $e");
       AppUtils().showToast(
@@ -124,7 +123,7 @@ class OtherUserProfile extends StatelessWidget {
   }
 
   void _handlePopupMenuSelection(String value, BuildContext context) {
-    switch(value) {
+    switch (value) {
       case 'Block':
         showDialog(
           context: context,
@@ -136,7 +135,7 @@ class OtherUserProfile extends StatelessWidget {
           ),
         );
         break;
-        
+
       case 'Report':
         showDialog(
           context: context,
@@ -144,7 +143,7 @@ class OtherUserProfile extends StatelessWidget {
             userID: userID,
             content: 'Why you report this user? Write a short Description',
             title: 'Report User?',
-            cancel: "Cancel", 
+            cancel: "Cancel",
             yes: "Submit",
             showTextField: true,
             hintText: 'Write the Description',
@@ -225,18 +224,22 @@ class ProfileImage extends StatelessWidget {
       child: Stack(
         alignment: Alignment.bottomRight,
         children: [
-          Container(
-            height: 100,
-            width: 100,
-            decoration: BoxDecoration(
-              border: Border.all(color: primaryColor, width: 3),
-              borderRadius: BorderRadius.circular(56),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(56),
-              child: profileUrl.isNotEmpty
-                  ? Image.network(profileUrl)
-                  : Image.asset(AppAssets.noProfile, fit: BoxFit.cover),
+          GestureDetector(
+            onTap: () {
+              Get.to(ImageDetailScreen(
+                imageUrl: profileUrl,
+              ));
+            },
+            child: Container(
+              height: 100,
+              width: 100,
+              decoration: BoxDecoration(
+                border: Border.all(color: primaryColor, width: 3),
+                borderRadius: BorderRadius.circular(56),
+              ),
+              child: ClipRRect(
+                  borderRadius: BorderRadius.circular(56),
+                  child: CachedShimmerImageWidget(imageUrl: profileUrl)),
             ),
           ),
         ],
@@ -295,13 +298,22 @@ class FollowAndActionButtons extends StatelessWidget {
             _buildFollowItem(
               postData.followers.length.toString(),
               "Followers",
-              () => Get.toNamed(RoutesName.followerScreen, arguments: postData.followers),
+              () => Get.toNamed(
+                RoutesName.followerScreen,
+                arguments: {
+                  'userId': postData.userUid, // Pass the current user's ID
+                },
+              ),
             ),
             const VerticalDivider(width: 20, thickness: 1, color: Colors.grey),
             _buildFollowItem(
               postData.following.length.toString(),
               "Following",
-              () => Get.toNamed(RoutesName.followingScreen),
+              () => Get.toNamed(RoutesName.followingScreen,
+                arguments: {
+                  'userId': postData.userUid,
+                },
+              ),
             ),
             const VerticalDivider(width: 20, thickness: 1, color: Colors.grey),
             _buildFollowItem(
@@ -344,7 +356,7 @@ class _otherActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chat = Provider.of<ChatProvider>(context, listen: false);
-    
+
     return Consumer<ActionProvider>(
       builder: (context, value, _) {
         final isFollowed = postData.followers.contains(currentUser);
@@ -354,7 +366,8 @@ class _otherActionButton extends StatelessWidget {
           children: [
             AppButtonWidget(
               radius: 8,
-              onPressed: () => value.toggleFolloww(postData.userUid, postData.userUid),
+              onPressed: () =>
+                  value.toggleFolloww(postData.userUid, postData.userUid),
               text: isFollowed ? "Following" : "Follow",
             ),
             const SizedBox(width: 5),
@@ -371,13 +384,12 @@ class _otherActionButton extends StatelessWidget {
 
   void _handleMessagePress(ChatProvider chat, BuildContext context) {
     chat.getChatID(
-      friendId: postData.userUid,
-      context: context,
-      name: postData.name,
-      image: postData.profileUrl,
-      fcmToken: postData.fcmToken,
-      status: postData.isOnline
-    );
+        friendId: postData.userUid,
+        context: context,
+        name: postData.name,
+        image: postData.profileUrl,
+        fcmToken: postData.fcmToken,
+        status: postData.isOnline);
   }
 }
 
@@ -410,7 +422,9 @@ class _MediaWrap extends StatelessWidget {
           alignment: WrapAlignment.start,
           spacing: 8,
           runSpacing: 20,
-          children: mediaList.map((media) => _buildMediaItem(context, media)).toList(),
+          children: mediaList
+              .map((media) => _buildMediaItem(context, media))
+              .toList(),
         );
       },
     );
@@ -418,7 +432,7 @@ class _MediaWrap extends StatelessWidget {
 
   Widget _buildMediaItem(BuildContext context, MediaPost media) {
     final mediaType = _determineMediaType(media.mediaUrl);
-    
+
     return GestureDetector(
       onTap: () {
         if (media.mediaUrl.isNotEmpty) {
@@ -448,7 +462,8 @@ class _MediaWrap extends StatelessWidget {
   String _determineMediaType(String url) {
     if (RegExp(r'\.jpe?g$|\.png$', caseSensitive: false).hasMatch(url)) {
       return 'image';
-    } else if (RegExp(r'\.mov|\.avi|\.mp4$', caseSensitive: false).hasMatch(url)) {
+    } else if (RegExp(r'\.mov|\.avi|\.mp4$', caseSensitive: false)
+        .hasMatch(url)) {
       return 'video';
     }
     return 'unknown';
@@ -458,7 +473,7 @@ class _MediaWrap extends StatelessWidget {
     if (url.isEmpty) {
       return const Icon(Icons.broken_image, color: Colors.grey);
     }
-    
+
     return mediaType == "image"
         ? Image.network(url, fit: BoxFit.cover)
         : VideoThumbnail(videoUrl: url);

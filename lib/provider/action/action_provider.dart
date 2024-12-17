@@ -20,6 +20,7 @@ import '../../model/res/constant/app_utils.dart';
 import '../../model/res/routes/routes_name.dart';
 import '../../model/services/enum/toastType.dart';
 import '../chat/chatProvider.dart';
+import '../current_user/current_user_provider.dart';
 import '../mediaSelection/mediaSelectionProvider.dart';
 
 class ActionProvider extends ChangeNotifier {
@@ -201,7 +202,7 @@ class ActionProvider extends ChangeNotifier {
   }
 
   ///////////to like and unlike the post //////
-  Future<void> likePost(String postId,token,currentUserName,postOwnerId) async {
+  Future<void> likePost(String postId,token,currentUserName,postOwnerId,notificationBody) async {
     final userId = auth.currentUser?.uid.toString() ?? "";
 
     if (userId.isNotEmpty) {
@@ -211,7 +212,7 @@ class ActionProvider extends ChangeNotifier {
         'isLiked': true,
       });
      _uploadNotification(
-          token,  currentUserName,  postOwnerId,  postId
+          token,  currentUserName,  postOwnerId,  postId,notificationBody
      );
 
     }
@@ -242,12 +243,12 @@ class ActionProvider extends ChangeNotifier {
   }
 
   // Toggle like/unlike
-  Future<void> toggleLike(String postId, List<String> likes,String currentUserName,token,postOwnerId) async {
+  Future<void> toggleLike(String postId, List<String> likes,String currentUserName,token,postOwnerId,notificationBody) async {
     final userId = auth.currentUser?.uid ?? "";
     if (likes.contains(userId)) {
       await unlikePost(postId);
     } else {
-      await likePost(postId,token,currentUserName,postOwnerId);
+      await likePost(postId,token,currentUserName,postOwnerId,notificationBody);
 
     }
     notifyListeners();
@@ -321,22 +322,23 @@ class ActionProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> unFollowUser(String userUid, String otherUserUid) async {
-    if (currentUser != null) {
-      final currentUserId = currentUser!;
-      log("Unfollowing user: $currentUserId -> $otherUserUid");
+  Future<void> unFollowUser(String currentUserUid, String otherUserUid) async {
+    try {
+      log("Unfollowing user: $currentUserUid -> $otherUserUid");
 
-      // Remove current user's ID from the other user's 'followers' list
-      await fireStore.collection('users').doc(otherUserUid).update({
-        'followers': FieldValue.arrayRemove([currentUserId]),
+      await FirebaseFirestore.instance.collection('users').doc(otherUserUid).update({
+        'followers': FieldValue.arrayRemove([currentUserUid]),
       });
 
-      // Remove other user's ID from the current user's 'following' list
-      await fireStore.collection('users').doc(currentUserId).update({
+      await FirebaseFirestore.instance.collection('users').doc(currentUserUid).update({
         'following': FieldValue.arrayRemove([otherUserUid]),
       });
+      log("Unfollowed user successfully!");
+    } catch (e) {
+      log("Error while unfollowing user: $e");
     }
   }
+
 
   Future<void> toggleFollow(String userUid, String otherUserUid) async {
     if (currentUser != null) {
@@ -350,9 +352,11 @@ class ActionProvider extends ChangeNotifier {
       if (followers.contains(currentUserId)) {
         log("Unfollowing $otherUserUid");
         await unFollowUser(userUid, otherUserUid);
+
       } else {
         log("Following $otherUserUid");
         await followUser(userUid, otherUserUid);
+
       }
     }
 
@@ -433,7 +437,13 @@ class ActionProvider extends ChangeNotifier {
   }
 
 //////////////add comment to posts//////
-  Future<void> addComment(String postId, String content) async {
+  Future<void> addComment(String postId,
+      String content,
+      String token,
+      String currentUserName,
+      String postOwnerId,
+      String notificationBody,
+      ) async {
     final userId = currentUser;
     final comment = CommentModel(
       commentId: timestampId,
@@ -448,6 +458,13 @@ class ActionProvider extends ChangeNotifier {
         .collection('comments')
         .doc(timestampId)
         .set(comment.toMap());
+    _uploadNotification(
+        token,
+        currentUserName,
+        postOwnerId,
+        postId,
+        notificationBody,
+    );
   }
 
   /////get comments for a post////////////
@@ -566,12 +583,14 @@ class ActionProvider extends ChangeNotifier {
     }
   }
 
-  void _uploadNotification(String token, String currentUserName, String postOwnerId, String postId) {
+  void _uploadNotification(String token, String currentUserName,
+      notificationBody
+  , String postOwnerId, String postId) {
     // Send the notification via FCM
     FCMService().sendNotification(
       token,
       'A New Notification!',
-      '$currentUserName liked your post',
+      '$currentUserName $notificationBody',
       currentUser,
     );
 
@@ -612,4 +631,43 @@ class ActionProvider extends ChangeNotifier {
       log('Error saving notification: $e');
     }
   }
+  Future<void> removeUser(String currentUserUid, String otherUserUid) async {
+    try {
+      log("Unfollowing user: $currentUserUid -> $otherUserUid");
+
+      await FirebaseFirestore.instance.collection('users').doc(currentUserUid).update({
+        'followers': FieldValue.arrayRemove([otherUserUid]),
+      });
+
+      await FirebaseFirestore.instance.collection('users').doc(otherUserUid).update({
+        'following': FieldValue.arrayRemove([currentUserUid]),
+      });
+
+
+      log("Unfollowed user successfully!");
+    } catch (e) {
+      log("Error while unfollowing user: $e");
+    }
+  }
+  Future<void> removeComment(String postId, String commentId) async {
+    try {
+      log('Attempting to delete comment. Post ID: $postId, Comment ID: $commentId');
+
+      await fireStore
+          .collection('posts')
+          .doc(postId)
+          .collection('comments')
+          .doc(commentId)
+          .delete();
+
+      log('Comment deleted successfully: $commentId');
+      AppUtils().showToast(text: 'Comment deleted successfully');
+    } catch (e) {
+      log('Error deleting comment: $e');
+      AppUtils().showToast(text: 'Error: $e');
+    }
+  }
+
+
+
 }

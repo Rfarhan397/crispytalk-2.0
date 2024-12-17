@@ -8,12 +8,14 @@ class ChatRoomModel {
   final String lastMessage;
   final String createdAt;
   int unreadMessageCount;
+  final bool? isUnread;
 
-  ChatRoomModel({
+  ChatRoomModel( {
     required this.docId,
     required this.users,
     required this.lastMessage,
     required this.createdAt,
+     this.isUnread,
     this.unreadMessageCount = 0,
   });
 
@@ -43,6 +45,7 @@ class ChatRoomModel {
       lastMessage: data['lastMessage'] ?? '',
       createdAt: createdAt,
       unreadMessageCount: 0,
+      isUnread: data['isUnread'] ?? false,
     );
   }
 

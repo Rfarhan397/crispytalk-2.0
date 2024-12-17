@@ -41,8 +41,6 @@ class ImageDetailScreen extends StatelessWidget {
               imageUrl:
           imageUrl,
           fit: BoxFit.cover,
-          height: Get.height,
-          width: Get.width,
         )),
       ),
     );

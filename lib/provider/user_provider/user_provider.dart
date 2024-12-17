@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -242,6 +243,47 @@ class UserProvider2 with ChangeNotifier {
 
   void clearSelection() {
     _selectedUsers.clear();
+    notifyListeners();
+  }
+}
+
+
+class SearchProvider extends ChangeNotifier {
+  List<UserModelT> _allUsers = []; // List to store all users fetched initially
+  List<UserModelT> _filteredUsers = []; // Filtered users based on search query
+  bool _isLoading = true; // To track loading state
+
+  List<UserModelT> get filteredUsers => _filteredUsers;
+  bool get isLoading => _isLoading;
+
+  // Fetch all users from Firestore
+  Future<void> fetchUsers() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final snapshot = await FirebaseFirestore.instance.collection('users').get();
+      _allUsers = snapshot.docs.map((doc) => UserModelT.fromMap(doc.data())).toList();
+      _filteredUsers = _allUsers; // Initially, show all users
+    } catch (e) {
+      debugPrint('Error fetching users: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Update filtered users based on the search query
+  void searchUsers(String query) {
+    if (query.isEmpty) {
+      _filteredUsers = _allUsers; // Reset to all users when query is empty
+    } else {
+      _filteredUsers = _allUsers.where((user) {
+        final nameLower = user.name.toLowerCase();
+        final queryLower = query.toLowerCase();
+        return nameLower.contains(queryLower);
+      }).toList();
+    }
     notifyListeners();
   }
 }

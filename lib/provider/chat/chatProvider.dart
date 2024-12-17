@@ -122,43 +122,46 @@ class ChatProvider with ChangeNotifier {
     });
   }
 
+  //
+  // Stream<List<ChatRoomModel>> getChatRooms() {
+  //   final uid = FirebaseAuth.instance.currentUser!.uid;
+  //   return _chats.where('users', arrayContains: uid).snapshots().map(
+  //         (snapshot) => snapshot.docs
+  //         .map((doc) => ChatRoomModel.fromMap(doc.data(), doc.id),
+  //     )
+  //         .toList(),
+  //   );
+  // }
+  List<ChatRoomModel> _allChats = [];
+  List<ChatRoomModel> _filteredChats = [];
 
+  List<ChatRoomModel> get filteredChats => _filteredChats;
+
+  // Function to fetch chat rooms (one-time load)
   Stream<List<ChatRoomModel>> getChatRooms() {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    return _chats.where('users', arrayContains: uid).snapshots().map(
-          (snapshot) => snapshot.docs
-          .map((doc) => ChatRoomModel.fromMap(doc.data(), doc.id),
-      )
-          .toList(),
-    );
+    return FirebaseFirestore.instance
+        .collection('chats')
+        .snapshots()
+        .map((snapshot) {
+      _allChats = snapshot.docs.map((doc) => ChatRoomModel.fromMap(doc.data(),doc.id)).toList();
+      _filteredChats = List.from(_allChats); // Copy the list for filtering
+      return _filteredChats;
+    });
+  }
+
+  // Search Function
+  void searchChats(String query) {
+    if (query.isEmpty) {
+      _filteredChats = List.from(_allChats); // Reset to all chats
+    } else {
+      _filteredChats = _allChats
+          .where((chat) => chat.lastMessage.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    }
+    notifyListeners();
   }
 
 
-  // Stream<List<ChatWithUser>> getChatsWithUserDetails(String chatId,) {
-  //   return FirebaseFirestore.instance
-  //       .collection('chats')
-  //       .doc(chatId)
-  //       .collection('messages')
-  //       .snapshots()
-  //       .asyncMap((snapshot) async {
-  //     final chatsWithUserDetails = await Future.wait(snapshot.docs.map((doc) async {
-  //       // Get chat message data
-  //       final chatMessage = ChatRoomModel.fromMap(doc.data(),'docId');
-  //
-  //       // Get user data using userId from the chat message
-  //       final userDoc = await FirebaseFirestore.instance.collection('users').doc(chatMessage.docId).get();
-  //       UserModelT? user;
-  //       if (userDoc.exists) {
-  //         user = UserModelT.fromMap(userDoc.data()!);
-  //       }
-  //
-  //       // Return combined chat message and user data as ChatWithUser
-  //       return ChatWithUser(chatRoomModel: chatMessage, user: user!);
-  //     }).toList());
-  //
-  //     return chatsWithUserDetails;
-  //   });
-  // }
 
 
   void sendTextMessage({required String chatId, required String message}) {
@@ -423,5 +426,25 @@ class ChatProvider with ChangeNotifier {
   void setLoading(bool loading) {
     _isLoading = loading;
     notifyListeners();
+  }
+  Future<void> deleteChat(String collection,chatRoomId) async {
+    try {
+      // Reference to the chat document
+      final chatDocRef = FirebaseFirestore.instance.collection(collection).doc(chatRoomId);
+
+      // Step 1: Delete all messages in the subcollection
+      final messagesQuerySnapshot =
+      await chatDocRef.collection('messages').get();
+      for (var doc in messagesQuerySnapshot.docs) {
+        await doc.reference.delete();
+      }
+
+      // Step 2: Delete the chat document
+      await chatDocRef.delete();
+
+      print('Chat and its messages deleted successfully');
+    } catch (e) {
+      print('Error deleting chat: $e');
+    }
   }
 }

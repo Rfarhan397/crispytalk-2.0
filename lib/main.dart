@@ -92,6 +92,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AudioCallProvider()),
         ChangeNotifierProvider(create: (_) => VideoCallProvider()),
         ChangeNotifierProvider(create: (_) => CurrentUserProvider()),
+        ChangeNotifierProvider(create: (_) => SearchProvider()),
       ],
       child: Consumer<AppLifeCycleProvider>(
           builder: (context,provider,child) {

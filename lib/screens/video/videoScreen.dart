@@ -1,6 +1,7 @@
-  import 'dart:developer';
+import 'dart:developer';
 
 import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
+import 'package:crispy/model/res/widgets/customDialog.dart';
 import 'package:crispy/screens/video/videoWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -73,9 +74,9 @@ class VideoScreen extends StatelessWidget {
                       final videos = snapshot.data;
                       if (videos == null || videos.isEmpty) {
                         return const Center(
-                            child: Text("No videos available",
-                                style: TextStyle(color: Colors.white),
-                            ),
+                          child: Text("No videos available",
+                            style: TextStyle(color: Colors.white),
+                          ),
                         );
                       }
 
@@ -118,8 +119,8 @@ class VideoScreen extends StatelessWidget {
                                             width: 40,
                                             height: 40,
                                             child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(100),
-                                              child: CachedShimmerImageWidget(imageUrl: video.userDetails?.profileUrl ?? '')
+                                                borderRadius: BorderRadius.circular(100),
+                                                child: CachedShimmerImageWidget(imageUrl: video.userDetails?.profileUrl ?? '')
                                             ),
                                           ),
                                         ],
@@ -137,6 +138,7 @@ class VideoScreen extends StatelessWidget {
                                             currentUserProvider.currentUser?.name ?? 'N/A'        ,
                                             video.userDetails!.fcmToken,
                                             video.userUid,
+                                            'Like your Post',
                                           );
                                         }
                                       },
@@ -144,8 +146,8 @@ class VideoScreen extends StatelessWidget {
                                         children: [
                                           SvgPicture.asset(
                                             Provider.of<ActionProvider>(context).isPostLiked(
-                                                video.timeStamp,
-                                                video.likes,
+                                              video.timeStamp,
+                                              video.likes,
 
                                             )
                                                 ? AppIcons.like
@@ -165,7 +167,12 @@ class VideoScreen extends StatelessWidget {
                                     GestureDetector(
                                       onTap: () {
                                         Get.bottomSheet(
-                                          BuildBottomSheet(context, video.timeStamp),
+                                          BuildBottomSheet(context, video.timeStamp,
+                                            video.userDetails?.fcmToken,
+                                            currentUserProvider.currentUser?.name,
+                                            video.userUid,
+
+                                          ),
                                           isScrollControlled: true,
                                         );
                                       },
@@ -233,10 +240,10 @@ class VideoScreen extends StatelessWidget {
                                   onTap:() {
                                     if (video.userDetails?.userUid != null) {
                                       Get.to(
-                                          OtherUserProfile(
-                                            userID: video.userDetails!.userUid,
-                                            userName: video.userDetails?.name ?? 'Unknown',
-                                          ),
+                                        OtherUserProfile(
+                                          userID: video.userDetails!.userUid,
+                                          userName: video.userDetails?.name ?? 'Unknown',
+                                        ),
                                       );
                                     }
                                   },
@@ -284,12 +291,14 @@ class VideoScreen extends StatelessWidget {
                 ],
               );
             }
-              ),
+        ),
       ),
     );
   }
 
-  Widget BuildBottomSheet(context, postId) {
+  Widget BuildBottomSheet(context, postId,token,currentUserName,postOwnerUid) {
+    final action = Provider.of<ActionProvider>(context, listen: false);
+    final currentUserProvider = Provider.of<CurrentUserProvider>(context, listen: false).currentUser;
     return DraggableScrollableSheet(
       initialChildSize: 0.6,
       minChildSize: 0.3,
@@ -340,58 +349,79 @@ class VideoScreen extends StatelessWidget {
 
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: primaryColor,
+                          child: GestureDetector(
+                            onLongPress: () {
+                              final currentUserId = currentUserProvider?.userUid;
+
+                              if (comment.user.userUid == currentUserId || postOwnerUid == currentUserId) {
+                                MyCustomDialog.show(
+                                  title: "Delete Comment",
+                                  content: "Are you sure you want to delete this comment?",
+                                  cancel: "Cancel",
+                                  yes: "Delete",
+                                  showTextField: false,
+                                  showTitle: true,
+                                  cancelTap: () {
+                                    Navigator.pop(context);
+                                  },
+                                  yesTap: () async {
+                                    await action.removeComment(postId, comment.comment.commentId);
+                                   Navigator.pop(context);
+                                  },
+                                );
+                              }
+                            },
+
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: primaryColor,
+                                ),
                               ),
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                CircleAvatar(
-                                  radius: 20,
-                                  backgroundColor: Colors.grey[500],
-                                  backgroundImage: comment.user.profileUrl.isNotEmpty
-                                      ? NetworkImage(comment.user.profileUrl)
-                                      : const AssetImage(AppAssets.noProfile)
-                                  as ImageProvider,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          AppTextWidget(
-                                            textAlign: TextAlign.start,
-                                            text: comment.user.name,
-                                            color: Colors.black,
-                                            fontSize: 16,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          AppTextWidget(
-                                            textAlign: TextAlign.start,
-                                            text: getTimeAgo(comment.comment.timestamp), // Pass the string timestamp here
-                                            color: Colors.grey,
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      AppTextWidget(
-                                        textAlign: TextAlign.start,
-                                        text: comment.comment.content,
-                                        overflow: TextOverflow.visible,
-                                        maxLines: null,
-                                        softWrap: true,
-                                      ),
-                                    ],
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 20,
+                                    backgroundColor: Colors.grey[500],
+                                    child: CachedShimmerImageWidget(imageUrl: comment.user.profileUrl),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            AppTextWidget(
+                                              textAlign: TextAlign.start,
+                                              text: comment.user.name,
+                                              color: Colors.black,
+                                              fontSize: 16,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            AppTextWidget(
+                                              textAlign: TextAlign.start,
+                                              text: getTimeAgo(comment.comment.timestamp), // Pass the string timestamp here
+                                              color: Colors.grey,
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        AppTextWidget(
+                                          textAlign: TextAlign.start,
+                                          text: comment.comment.content,
+                                          overflow: TextOverflow.visible,
+                                          maxLines: null,
+                                          softWrap: true,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         );
@@ -431,12 +461,19 @@ class VideoScreen extends StatelessWidget {
                           ),
                         ),
                         suffixIcon: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          padding:  EdgeInsets.symmetric(horizontal: 8.0),
                           child: GestureDetector(
                             onTap: () async {
                               if (commentController.text.isNotEmpty) {
                                 await Provider.of<ActionProvider>(context, listen: false)
-                                    .addComment(postId, commentController.text);
+                                    .addComment(
+                                    postId,
+                                    commentController.text,
+                                    token,
+                                    currentUserName,
+                                    postOwnerUid,
+                                    'commented on your video'
+                                );
                                 commentController.clear();
                               }
                             },

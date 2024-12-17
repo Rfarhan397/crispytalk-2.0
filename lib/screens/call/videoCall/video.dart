@@ -1,11 +1,12 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crispy/constant.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-
-import '../../../constant.dart';
 import '../../../model/res/constant/app_utils.dart';
 import '../../../model/res/widgets/app_text.dart.dart';
 import '../../../model/res/widgets/button_widget.dart';
@@ -87,13 +88,13 @@ class _VideoCallWidgetState extends State<VideoCallWidget> {
   }
 
   Future<void> _startOrJoinCall() async {
-    if (widget.isCaller) {
+    log('caller is :::${widget.isCaller}');
+  if (widget.isCaller) {
       await callProvider.startCall(widget.callId);
     } else {
       await callProvider.joinCall(widget.callId);
     }
 
-    // Listen to call status in real-time **after starting or joining the call**
     callStatusStream = FirebaseFirestore.instance
         .collection('calls')
         .doc(widget.callId)
@@ -285,10 +286,10 @@ class _VideoCallWidgetState extends State<VideoCallWidget> {
                 Expanded(
                   child: ButtonWidget(
                     height: 44,
-                    backgroundColor: Colors.black,
+                    textColor: Colors.black,
                     text: 'Cancel',
-                    width: 20.w,
-                    fontWeight: FontWeight.w500,
+                    width: 10.w,
+                    fontWeight: FontWeight.w600,
                     onClicked: () async {
                       Get.back();
                       _endCall();
@@ -300,12 +301,11 @@ class _VideoCallWidgetState extends State<VideoCallWidget> {
                   child: ButtonWidget(
                     height: 44,
                     text: 'Start',
-                    width: 20.w,
-                    fontWeight: FontWeight.w500,
                     onClicked: () {
                       Get.back();
                       _startOrJoinCall();
-                    },
+                    }, width: 10.w,
+                    fontWeight: FontWeight.w600,
                   ),
                 )
               ],

@@ -34,7 +34,7 @@ class ChatScreen extends StatelessWidget {
   final String name = Get.arguments['name'];
   final String image = Get.arguments['image'];
   final String fcmToken = Get.arguments['fcmToken'] ?? "null";
-  final bool status = Get.arguments['isOnline'];
+  final bool status = Get.arguments['isOnline'] ?? false;
   final ChatRoomModel chat = Get.arguments['chat'];
   @override
   Widget build(BuildContext context) {
@@ -56,7 +56,8 @@ class ChatScreen extends StatelessWidget {
             height: 50,
             width: 50,
             decoration: BoxDecoration(
-                color: whiteColor, borderRadius: BorderRadius.circular(50)),
+                color: whiteColor, borderRadius: BorderRadius.circular(50),
+            ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(100),
               child: CachedShimmerImageWidget(imageUrl: image),
@@ -69,7 +70,7 @@ class ChatScreen extends StatelessWidget {
             fontSize: 15,
           ),
           subtitle: AppTextWidget(
-              text: status == true ? 'Offline' : 'Online',
+              text: status == true ? 'Online' : 'Offline',
               textAlign: TextAlign.start,
               color: Colors.white),
         ),
@@ -100,7 +101,7 @@ class ChatScreen extends StatelessWidget {
                 stream: value.getMessages(chat.docId),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(
+                    return const Center(
                         child: CircularProgressIndicator(
                       color: primaryColor,
                     ));
@@ -109,7 +110,7 @@ class ChatScreen extends StatelessWidget {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   }
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text('No Messages available'));
+                    return const Center(child: Text('No Messages available'));
                   }
                   final messages = snapshot.data ?? [];
 

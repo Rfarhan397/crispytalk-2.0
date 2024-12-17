@@ -18,6 +18,7 @@ import '../../model/res/routes/routes_name.dart';
 import '../../model/res/widgets/app_text.dart.dart';
 import '../../provider/action/action_provider.dart';
 import '../../provider/current_user/current_user_provider.dart';
+import '../ImageDetail/image_detail.dart';
 import '../video/mediaViewerScreen.dart';
 
 class UserProfile extends StatelessWidget {
@@ -25,7 +26,7 @@ class UserProfile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final menuProvider = Provider.of<ActionProvider>(context); // Access provider
+    final menuProvider = Provider.of<ActionProvider>(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.white,
@@ -121,8 +122,7 @@ class UserProfile extends StatelessWidget {
 class UserProfileCurrentUser extends StatelessWidget {
   final String userUid;
 
-  const UserProfileCurrentUser({Key? key, required this.userUid})
-      : super(key: key);
+  const UserProfileCurrentUser({super.key, required this.userUid});
 
   @override
   Widget build(BuildContext context) {
@@ -130,7 +130,7 @@ class UserProfileCurrentUser extends StatelessWidget {
     final userData = currentUserProvider.currentUser;
 
     if (userData == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator(color: primaryColor,));
     }
 
     return Column(
@@ -145,14 +145,22 @@ class UserProfileCurrentUser extends StatelessWidget {
             children: [
               Align(
                   alignment: Alignment.center,
-                  child: UserDetails(name: userData.name, bio: userData.bio)),
-              FollowAndActionButtons(
-                followers: userData.followers,
-                following: userData.following,
-                likes: userData.likes,
+                  child: UserDetails(
+                      name: userData.name,
+                      bio: userData.bio,
+                  ),
+              ),
+              Consumer<CurrentUserProvider>(
+               builder: (context, userData, child) {
+                 return FollowAndActionButtons(
+                   followers: userData.currentUser!.followers,
+                   following: userData.currentUser!.following,
+                   likes: userData.currentUser!.likes,
+                 );
+               },
               ),
               const SizedBox(height: 10),
-              ProfileActions(), // Profile Actions widget
+              const ProfileActions(),
               SizedBox(height: 2.h),
               _MediaWrap(userUid: userData.userUid),
             ],
@@ -195,29 +203,22 @@ class ProfileImage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Transform.translate(
       offset: Offset(0, -10.h),
-      child: Container(
-        height: 100,
-        width: 100,
-        decoration: BoxDecoration(
-          color: Colors.white, // Optional: Add a background color
-          shape: BoxShape.circle, // Ensures the container is circular
-          border: Border.all(color: primaryColor, width: 3),
-        ),
-        child: ClipOval(
-          // Clip the child into a circular shape
-          child: profileUrl!.isNotEmpty
-              ? Image.network(
-                  profileUrl!,
-                  fit: BoxFit.cover,
-                  width: 100, // Match the container size
-                  height: 100,
-                )
-              : Image.asset(
-                  AppAssets.noImage,
-                  fit: BoxFit.cover,
-                  width: 100, // Match the container size
-                  height: 100,
-                ),
+      child: GestureDetector(
+        onTap: () {
+      Get.to(ImageDetailScreen(
+        imageUrl: profileUrl.toString(),
+      ));},
+        child: Container(
+          height: 100,
+          width: 100,
+          decoration: BoxDecoration(
+            border: Border.all(color: primaryColor, width: 3),
+            borderRadius: BorderRadius.circular(56),
+          ),
+          child: ClipRRect(
+              borderRadius: BorderRadius.circular(56),
+              child: CachedShimmerImageWidget(imageUrl: profileUrl.toString())
+          ),
         ),
       ),
     );
@@ -277,7 +278,11 @@ class FollowAndActionButtons extends StatelessWidget {
               (followers?.length ?? 0).toString(),
               "Followers",
               onTap: () {
-                // Handle followers tap
+                Get.toNamed(RoutesName.followerScreen,
+                  arguments: {
+                    'userId': currentUser, // Pass the current user's ID
+                  },
+                );
               },
             ),
             const VerticalDivider(width: 20, thickness: 1, color: Colors.grey),
@@ -285,7 +290,12 @@ class FollowAndActionButtons extends StatelessWidget {
               (following?.length ?? 0).toString(),
               "Following",
               onTap: () {
-                // Handle following tap
+                Get.toNamed(RoutesName.followingScreen,
+                  arguments: {
+                    'userId': currentUser, // Pass the current user's ID
+                  },
+
+                );
               },
             ),
             const VerticalDivider(width: 20, thickness: 1, color: Colors.grey),

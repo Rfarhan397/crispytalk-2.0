@@ -10,6 +10,7 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:sizer/sizer.dart';
+import 'package:timeago/timeago.dart';
 import '../../constant.dart';
 import '../../model/mediaPost/mediaPost_model.dart';
 import '../../model/res/components/app_back_button.dart';
@@ -20,6 +21,7 @@ import '../../model/res/constant/app_icons.dart';
 import '../../model/res/constant/app_utils.dart';
 import '../../model/res/routes/routes_name.dart';
 import '../../model/res/widgets/app_text.dart.dart';
+import '../../model/user_model/user_model.dart';
 import '../../provider/action/action_provider.dart';
 import '../../provider/otherUserData/otherUserDataProvider.dart';
 import '../../provider/stream/streamProvider.dart';
@@ -38,10 +40,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    log('build 2');
-    final otherUser =
-        Provider.of<OtherUSerDataProvider>(context); // Access provider
-
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -66,7 +64,7 @@ class HomeScreen extends StatelessWidget {
               onTap: () {
                 showSearch(
                   context: context,
-                  delegate: CustomSearchDelegate(),
+                  delegate: CustomSearchDelegate(userStream: StreamDataProvider().getUsers()),
                 );
               },
               child: Padding(
@@ -114,7 +112,7 @@ class HomeScreen extends StatelessWidget {
                         final postData = posts[index];
                         final profileImage = postData.userDetails?.profileUrl;
                         final userName =
-                            postData.userDetails?.name ?? 'Unknown User';
+                            postData.userDetails?.name.capitalizeFirst ?? 'Unknown User';
                         final mediaUrl = postData.mediaUrl ?? '';
                         final mediaType = postData.mediaType ?? '';
 
@@ -152,7 +150,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return PostShimmerWidget();
+                    return const PostShimmerWidget();
                   }
                   if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
@@ -190,7 +188,8 @@ class HomeScreen extends StatelessWidget {
                             Get.to(OtherUserProfile(userID: postData.userUid,userName: postData.userDetails!.name));
                           },
                           postData.userDetails?.profileUrl ?? "",
-                          postData.userDetails?.name ?? 'Unknown User',
+                          postData.userDetails?.name.capitalizeFirst ?? 'Unknown User',
+                          _formatTime(postData.timeStamp) ?? 'time',
                           postData.title,
                           () {
                             final isImage =
@@ -228,7 +227,18 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+  String _formatTime(String timestamp) {
+    final dateTime = DateTime.fromMillisecondsSinceEpoch(int.parse(timestamp));
+    final now = DateTime.now();
 
+    if (now.difference(dateTime).inMinutes < 60) {
+      return '${now.difference(dateTime).inMinutes} min ago';
+    } else if (now.difference(dateTime).inHours < 24) {
+      return '${now.difference(dateTime).inHours} hours ago';
+    } else {
+      return '${now.difference(dateTime).inDays} days ago';
+    }
+  }
 
 
   // Build photo card widget
@@ -340,6 +350,7 @@ class HomeScreen extends StatelessWidget {
     VoidCallback profileOnTap,
     String profileImage,
     String userName,
+    String time,
     String caption,
     VoidCallback onTap,
     String video,
@@ -373,6 +384,12 @@ class HomeScreen extends StatelessWidget {
                       color: primaryColor,
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
+                    ),
+                    AppTextWidget(
+                      text: time,
+                      color: customGrey,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
                     ),
                   ],
                 ),
@@ -512,42 +529,14 @@ class HomeScreen extends StatelessWidget {
 
 }
 
+
 class CustomSearchDelegate extends SearchDelegate {
-  List<String> names = [
-    "Farhan",
-    "Amir",
-    "Rehman",
-    "Fahad",
-    "Uzair",
-    "Hafiz jee",
-  ];
+  final Stream<List<UserModelT>> userStream;
+
+  CustomSearchDelegate({required this.userStream});
 
   @override
   String get searchFieldLabel => 'Search';
-
-  @override
-  ThemeData appBarTheme(BuildContext context) {
-    return ThemeData(
-      textSelectionTheme: const TextSelectionThemeData(
-        cursorColor: primaryColor,
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: Colors.grey[300],
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30),
-          borderSide: BorderSide.none,
-        ),
-
-        // prefixIcon: Padding(
-        //   padding: EdgeInsets.only(left: 15, right: 10),
-        //   child: Icon(Icons.search, color: Colors.orange),
-        // ),
-      ),
-    );
-  }
 
   @override
   List<Widget> buildActions(BuildContext context) {
@@ -565,128 +554,66 @@ class CustomSearchDelegate extends SearchDelegate {
 
   @override
   Widget buildLeading(BuildContext context) {
-    return AppBackButton(
-      onTap: () {
-        close(context, null);
-      },
-    );
+    return const AppBackButton();
   }
 
   @override
   Widget buildResults(BuildContext context) {
-    final provider = Provider.of<UserProvider>(context);
-    final results = provider.users.where((user) {
-      return user.username
-              .toString()
-              .toLowerCase()
-              .contains(query.toLowerCase()) ||
-          user.nickname.toString().toLowerCase().contains(query.toLowerCase());
-    }).toList();
-
-    return ListView.builder(
-        itemCount: results.length,
-        itemBuilder: (context, index) {
-          final user = results[index];
-
-          return ListTile(
-              leading: CircleAvatar(
-                radius: 25,
-                backgroundImage: AssetImage(user.imageUrl.toString()),
-              ),
-              title: AppTextWidget(
-                  text: user.username.toString(),
-                  fontSize: 16,
-                  textAlign: TextAlign.start,
-                  fontWeight: FontWeight.w500),
-              subtitle: AppTextWidget(
-                text: '${user.nickname} \n${user.followers} Followers',
-                fontSize: 10,
-                textAlign: TextAlign.start,
-                fontWeight: FontWeight.w300,
-              ),
-              trailing: GestureDetector(
-                onTap: () {
-                  provider.toggleFollowStatus(user);
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(5),
-                  width: 80,
-                  // Set the desired width
-                  height: 30,
-                  decoration: BoxDecoration(
-                      color: user.isFollowing ? Colors.grey : primaryColor,
-                      borderRadius: BorderRadius.circular(8)),
-                  child: Center(
-                    child: Text(
-                      user.isFollowing ? 'Following' : 'Follow',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ));
-        });
+    return _buildUserStream();
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final provider = Provider.of<UserProvider>(context);
-    final results = provider.users.where((user) {
-      return user.username
-              .toString()
-              .toLowerCase()
-              .contains(query.toLowerCase()) ||
-          user.nickname.toString().toLowerCase().contains(query.toLowerCase());
-    }).toList();
+    return _buildUserStream();
+  }
 
-    return ListView.builder(
-        itemCount: results.length,
-        itemBuilder: (context, index) {
-          final user = results[index];
+  Widget _buildUserStream() {
+    return StreamBuilder<List<UserModelT>>(
+      stream: userStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          return ListTile(
+        if (snapshot.hasError) {
+          return const Center(child: Text("Error fetching users"));
+        }
+
+        final users = snapshot.data ?? [];
+        final filteredUsers = users.where((user) {
+          return user.name.toLowerCase().contains(query.toLowerCase()) ||
+              user.email.toLowerCase().contains(query.toLowerCase());
+        }).toList();
+
+        if (filteredUsers.isEmpty) {
+          return const Center(child: Text("No users found"));
+        }
+
+        return ListView.builder(
+          itemCount: filteredUsers.length,
+          itemBuilder: (context, index) {
+            final user = filteredUsers[index];
+
+            return ListTile(
+              onTap: () {
+                Get.to(OtherUserProfile(
+                    userID: user.userUid,
+                    userName: user.name),
+                );
+              },
               leading: CircleAvatar(
                 radius: 25,
-                backgroundImage: AssetImage(user.imageUrl.toString()),
+              child: ClipRRect(
+                  borderRadius: BorderRadius.circular(100),
+                  child: CachedShimmerImageWidget(imageUrl: user.profileUrl)),
               ),
-              title: AppTextWidget(
-                text: user.username.toString(),
-                fontSize: 16,
-                textAlign: TextAlign.start,
-                fontWeight: FontWeight.w500,
-              ),
-              subtitle: AppTextWidget(
-                text: '${user.nickname} \n${user.followers} Followers',
-                fontSize: 12,
-                textAlign: TextAlign.start,
-                fontWeight: FontWeight.w300,
-              ),
-              trailing: GestureDetector(
-                onTap: () {
-                  provider.toggleFollowStatus(user);
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(5),
-                  width: 80,
-                  height: 30,
-                  decoration: BoxDecoration(
-                      color: user.isFollowing ? Colors.grey : primaryColor,
-                      borderRadius: BorderRadius.circular(8)),
-                  child: Center(
-                    child: Text(
-                      user.isFollowing ? 'Following' : 'Follow',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ));
-        });
+              title: Text(user.name , style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(user.email),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            );
+          },
+        );
+      },
+    );
   }
 }

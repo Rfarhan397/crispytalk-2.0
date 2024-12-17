@@ -194,7 +194,6 @@ class MyCustomDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("Current User ID : $currentUser");
     return Dialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
