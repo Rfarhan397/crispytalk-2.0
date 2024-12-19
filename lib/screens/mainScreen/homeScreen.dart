@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
 import 'package:crispy/screens/mainScreen/suggestedUser/suggestedUser.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,27 +7,20 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:provider/provider.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:sizer/sizer.dart';
-import 'package:timeago/timeago.dart';
 import '../../constant.dart';
 import '../../model/mediaPost/mediaPost_model.dart';
 import '../../model/res/components/app_back_button.dart';
 import '../../model/res/components/app_button_widget.dart';
 import '../../model/res/components/shimmer.dart';
-import '../../model/res/constant/app_assets.dart';
 import '../../model/res/constant/app_icons.dart';
-import '../../model/res/constant/app_utils.dart';
 import '../../model/res/routes/routes_name.dart';
 import '../../model/res/widgets/app_text.dart.dart';
 import '../../model/user_model/user_model.dart';
-import '../../provider/action/action_provider.dart';
-import '../../provider/otherUserData/otherUserDataProvider.dart';
+import '../../provider/postCache/postCacheProvider.dart';
 import '../../provider/stream/streamProvider.dart';
-import '../../provider/user_provider/user_provider.dart';
 import '../ImageDetail/image_detail.dart';
 import '../myProfile/otherUserProfile/otherUserProfile.dart';
-import '../video/mediaViewerScreen.dart';
 import '../video/videoScreen.dart';
 import '../video/videoWidget.dart';
 
@@ -91,6 +83,10 @@ class HomeScreen extends StatelessWidget {
                   ),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
+                      final cachedData = context.watch<PostCacheProvider>().cachedPosts;
+                      if (cachedData != null) {
+                        return buildPostsList(cachedData);
+                      }
                       return ShimmerContainer();
                     }
                     if (snapshot.hasError) {
@@ -102,8 +98,7 @@ class HomeScreen extends StatelessWidget {
 
                     final posts = snapshot.data ?? [];
 
-                    posts.sort(
-                        (a, b) => b.likes.length.compareTo(a.likes.length));
+                    posts.sort((a, b) => b.likes.length.compareTo(a.likes.length));
 
                     return ListView.builder(
                       scrollDirection: Axis.horizontal,
@@ -150,6 +145,10 @@ class HomeScreen extends StatelessWidget {
                 ),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
+                    final cachedData = context.watch<PostCacheProvider>().cachedPosts;
+                    if (cachedData != null) {
+                      return buildVerticalPostsList(cachedData);
+                    }
                     return const PostShimmerWidget();
                   }
                   if (snapshot.hasError) {
@@ -158,67 +157,13 @@ class HomeScreen extends StatelessWidget {
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Center(child: Text('No posts available'));
                   }
-                  final post = snapshot.data ?? [];
-                  log('post data is $post');
+                  final posts = snapshot.data ?? [];
+                  log('post data is $posts');
 
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    scrollDirection: Axis.vertical,
-                    itemCount: post.length,
-                    itemBuilder: (context, index) {
-                      final postData = post[index];
-                      String mediaType = '';
-                      if (postData.mediaUrl.endsWith('.jpg') ||
-                          postData.mediaUrl.endsWith('.jpeg')) {
-                        mediaType = 'jpg';
-                      } else if (postData.mediaUrl.endsWith('.png')) {
-                        mediaType = 'png';
-                      } else if (postData.mediaUrl.endsWith('.mov') ||
-                          postData.mediaUrl.endsWith('.avi') ||
-                          postData.mediaUrl.endsWith('.mp4')) {
-                        mediaType = 'video';
-                      }
-                      final isLiked = postData.likes.contains(currentUser);
-
-                      return Padding(
-                        padding: EdgeInsets.only(right: 3.w),
-                        child: buildPostContainer(
-                          () {
-                            Get.to(OtherUserProfile(userID: postData.userUid,userName: postData.userDetails!.name));
-                          },
-                          postData.userDetails?.profileUrl ?? "",
-                          postData.userDetails?.name.capitalizeFirst ?? 'Unknown User',
-                          _formatTime(postData.timeStamp) ?? 'time',
-                          postData.title,
-                          () {
-                            final isImage =
-                                postData.mediaUrl.endsWith('.jpg') ||
-                                    postData.mediaUrl.endsWith('.png') ||
-                                    postData.mediaUrl.endsWith('.jpeg');
-                            final isVideo =
-                                postData.mediaUrl.endsWith('.mp4') ||
-                                    postData.mediaUrl.endsWith('.mov') ||
-                                    postData.mediaUrl.endsWith('.avi');
-                            if (isVideo) {
-                              Get.to(VideoScreen(
-                                index: index,
-                                imagePath: postData.userDetails!.profileUrl,
-                                hasBackBtn: true,
-                              ));
-                            }
-                            if (isImage) {
-                              Get.to(ImageDetailScreen(
-                                  imageUrl: postData.mediaUrl));
-                            }
-                          },
-                          postData.mediaUrl,
-                          postData.likes,
-                          postData.mediaType,
-                        ),
-                      );
-                    },
-                  );
+                  // Store posts in cache
+                  context.read<PostCacheProvider>().setCachedPosts(posts);
+                  
+                  return buildVerticalPostsList(posts);
                 },
               ),
             ],
@@ -227,6 +172,68 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+
+  Widget buildVerticalPostsList(List<MediaPost> post) {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      scrollDirection: Axis.vertical,
+      itemCount: post.length,
+      itemBuilder: (context, index) {
+        final postData = post[index];
+        String mediaType = '';
+        if (postData.mediaUrl.endsWith('.jpg') ||
+            postData.mediaUrl.endsWith('.jpeg')) {
+          mediaType = 'jpg';
+        } else if (postData.mediaUrl.endsWith('.png')) {
+          mediaType = 'png';
+        } else if (postData.mediaUrl.endsWith('.mov') ||
+            postData.mediaUrl.endsWith('.avi') ||
+            postData.mediaUrl.endsWith('.mp4')) {
+          mediaType = 'video';
+        }
+        final isLiked = postData.likes.contains(currentUser);
+
+        return Padding(
+          padding: EdgeInsets.only(right: 3.w),
+          child: buildPostContainer(
+            () {
+              Get.to(OtherUserProfile(userID: postData.userUid,userName: postData.userDetails!.name));
+            },
+            postData.userDetails?.profileUrl ?? "",
+            postData.userDetails?.name.capitalizeFirst ?? 'Unknown User',
+            _formatTime(postData.timeStamp) ?? 'time',
+            postData.title,
+            () {
+              final isImage =
+                  postData.mediaUrl.endsWith('.jpg') ||
+                      postData.mediaUrl.endsWith('.png') ||
+                      postData.mediaUrl.endsWith('.jpeg');
+              final isVideo =
+                  postData.mediaUrl.endsWith('.mp4') ||
+                      postData.mediaUrl.endsWith('.mov') ||
+                      postData.mediaUrl.endsWith('.avi');
+              if (isVideo) {
+                Get.to(VideoScreen(
+                  index: index,
+                  imagePath: postData.userDetails!.profileUrl,
+                  hasBackBtn: true,
+                ));
+              }
+              if (isImage) {
+                Get.to(ImageDetailScreen(
+                    imageUrl: postData.mediaUrl));
+              }
+            },
+            postData.mediaUrl,
+            postData.likes,
+            postData.mediaType,
+          ),
+        );
+      },
+    );
+  }
+
   String _formatTime(String timestamp) {
     final dateTime = DateTime.fromMillisecondsSinceEpoch(int.parse(timestamp));
     final now = DateTime.now();
@@ -526,6 +533,37 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  Widget buildPostsList(List<MediaPost> posts) {
+    posts.sort((a, b) => b.likes.length.compareTo(a.likes.length));
+    
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      itemCount: posts.length,
+      itemBuilder: (context, index) {
+        final postData = posts[index];
+        final profileImage = postData.userDetails?.profileUrl;
+        final userName = postData.userDetails?.name.capitalizeFirst ?? 'Unknown User';
+        final mediaUrl = postData.mediaUrl ?? '';
+        final mediaType = postData.mediaType ?? '';
+
+        return Padding(
+          padding: EdgeInsets.only(right: 2.w),
+          child: buildPhotoCard(
+            profileImage: profileImage.toString(),
+            userName: userName,
+            mediaUrl: mediaUrl,
+            mediaType: mediaType,
+            onTap: () {
+              Get.toNamed(
+                RoutesName.video,
+                arguments: {'videoUrl': mediaUrl},
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
 
 }
 

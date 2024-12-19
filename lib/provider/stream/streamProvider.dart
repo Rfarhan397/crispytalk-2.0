@@ -70,90 +70,91 @@ class StreamDataProvider extends ChangeNotifier {
     required String currentUserId,
     String? audience,
     String? userStatus,
-    bool includeCurrentUser = true, // Default: Include current user's posts
+    bool includeCurrentUser = true,
   }) async* {
-    List<String> validUserIds = [];
-    List<String> blockedUserIds = [];
-
     try {
-      // Fetch blocked user IDs from the current user's block list
+      // Fetch current user's block list
       final currentUserDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(currentUserId)
           .get();
 
       final currentUserData = currentUserDoc.data() as Map<String, dynamic>?;
-      if (currentUserData != null) {
-        blockedUserIds = List<String>.from(currentUserData['blocks'] ?? []);
+      final blockedUserIds = List<String>.from(currentUserData?['blocks'] ?? []);
+
+      // Create base query for posts
+      Query postsQuery = FirebaseFirestore.instance
+          .collection('posts')
+          .orderBy('timeStamp', descending: true);
+
+      if (audience != null) {
+        postsQuery = postsQuery.where('audience', isEqualTo: audience);
       }
 
-      // Fetch valid user IDs (excluding blocked users)
-      Query userQuery = FirebaseFirestore.instance.collection('users');
-      userQuery = userQuery.where('blockStatus', isNotEqualTo: 'blockedBy$currentUserId');
-      final usersSnapshot = await userQuery.get();
+      yield* postsQuery.snapshots().asyncMap((snapshot) async {
+        try {
+          // Get unique user IDs from posts, excluding blocked users
+          final postUserIds = snapshot.docs
+              .map((doc) {
+                final data = doc.data() as Map<String, dynamic>?;
+                return data?['userUid'] as String?;
+              })
+              .whereType<String>()
+              .where((uid) => !blockedUserIds.contains(uid)) // Filter out blocked users
+              .where((uid) => includeCurrentUser || uid != currentUserId) // Handle current user inclusion
+              .toSet();
 
-      validUserIds = usersSnapshot.docs
-          .map((doc) => doc.id)
-          .where((uid) => !blockedUserIds.contains(uid)) // Exclude blocked users
-          .toList();
-    } catch (e) {
-      print('Error fetching valid user IDs: $e');
-    }
+          if (postUserIds.isEmpty) {
+            return [];
+          }
 
-    Query postsQuery = FirebaseFirestore.instance
-        .collection('posts')
-        .orderBy('timeStamp', descending: true);
+          // Fetch user details in batches
+          List<Map<String, dynamic>> usersData = [];
+          for (int i = 0; i < postUserIds.length; i += 10) {
+            final batchIds = postUserIds.toList().sublist(
+                i, i + 10 > postUserIds.length ? postUserIds.length : i + 10);
 
-    if (audience != null) {
-      postsQuery = postsQuery.where('audience', isEqualTo: audience);
-    }
+            final batchUsersSnapshot = await FirebaseFirestore.instance
+                .collection('users')
+                .where(FieldPath.documentId, whereIn: batchIds)
+                .get();
 
-    yield* postsQuery.snapshots().asyncMap((snapshot) async {
-      try {
-        final postUserIds = snapshot.docs
-            .map((doc) {
-          final data = doc.data() as Map<String, dynamic>?;
-          return data?['userUid'] as String?;
-        })
-            .whereType<String>()
-            .toSet();
+            usersData.addAll(batchUsersSnapshot.docs.map((doc) => doc.data()));
+          }
 
-        // Filter user IDs by excluding blocked users and applying valid user check
-        final filteredUserIds = postUserIds
-            .where((uid) =>
-        (includeCurrentUser || uid != currentUserId) && // Exclude current user if false
-            validUserIds.contains(uid) && // Only valid user IDs
-            !blockedUserIds.contains(uid)) // Exclude blocked users
-            .toList();
+          // Create map of user details
+          final userMap = {
+            for (var user in usersData) user['userUid']: UserModelT.fromMap(user)
+          };
 
-        List<Map<String, dynamic>> usersData = [];
-        for (int i = 0; i < filteredUserIds.length; i += 10) {
-          final batchIds = filteredUserIds.sublist(
-              i, i + 10 > filteredUserIds.length ? filteredUserIds.length : i + 10);
+          // Map posts with user details
+          return snapshot.docs
+              .map((doc) {
+                final postData = doc.data();
+                final userUid = (postData as Map<String, dynamic>)['userUid'] as String?;
+                
+                // Skip posts from blocked users
+                if (userUid == null || blockedUserIds.contains(userUid)) {
+                  return null;
+                }
 
-          final batchUsersSnapshot = await FirebaseFirestore.instance
-              .collection('users')
-              .where(FieldPath.documentId, whereIn: batchIds)
-              .get();
+                final mediaPost = MediaPost.fromMap(postData as Map<String, dynamic>);
+                mediaPost.userDetails = userMap[mediaPost.userUid];
+                return mediaPost;
+              })
+              .whereType<MediaPost>() // Remove null entries
+              .where((post) => post.userDetails != null)
+              .toList();
 
-          usersData.addAll(batchUsersSnapshot.docs.map((doc) => doc.data()));
+        } catch (e) {
+          print('Error processing posts: $e');
+          return [];
         }
-
-        final userMap = {
-          for (var user in usersData) user['userUid']: UserModelT.fromMap(user)
-        };
-
-        return snapshot.docs.map((doc) {
-          final postData = doc.data();
-          final mediaPost = MediaPost.fromMap(postData as Map<String, dynamic>);
-          mediaPost.userDetails = userMap[mediaPost.userUid];
-          return mediaPost;
-        }).where((post) => post.userDetails != null).toList();
-      } catch (e) {
-        print('Error processing posts: $e');
-        return [];
-      }
-    });
+      });
+    } catch (e) {
+      print('Error in getPostsWithUserDetails: $e');
+      yield [];
+    }
   }
 
   Stream<List<UserModelT>> getBlockedUsers(String userID) async* {
@@ -234,30 +235,12 @@ class StreamDataProvider extends ChangeNotifier {
           .toList();
     });
   }
-  // Future<List<GroupUserModel>> getGroupMembers(String groupID) async {
-  //   final groupDoc = await FirebaseFirestore.instance
-  //       .collection('groupChats')
-  //       .doc(groupID)
-  //       .get();
-  //
-  //   final members = groupDoc['members'] as List<dynamic>;
-  //
-  //   return members.map((member) {
-  //     return GroupUserModel(
-  //       userUid: member['userUid'],
-  //       fcmToken: member['fcmToken'],
-  //       name: member['name'],
-  //       profileUrl: member['profileUrl'],
-  //     );
-  //   }).toList();
-  // }
   Future<List<GroupUserModel>> getGroupMembers(String groupID) async {
     final groupDoc = await FirebaseFirestore.instance
         .collection('groupChats')
         .doc(groupID)
         .get();
 
-    // Get the list of user UIDs from the group document
     final memberUIDs = List<String>.from(groupDoc['members']);
 
     // Fetch user details for each UID from the users collection

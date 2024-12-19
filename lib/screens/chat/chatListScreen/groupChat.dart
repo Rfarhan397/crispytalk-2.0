@@ -1,6 +1,5 @@
 
 import 'dart:developer';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crispy/model/res/constant/app_utils.dart';
 import 'package:crispy/model/res/routes/routes_name.dart';
@@ -14,7 +13,6 @@ import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import '../../../constant.dart';
 import '../../../model/chatMessage/chatMessageModel.dart';
-import '../../../model/res/constant/app_assets.dart';
 import '../../../model/res/constant/app_icons.dart';
 import '../../../model/res/widgets/app_text.dart.dart';
 import '../../../model/res/widgets/button_widget.dart';
@@ -24,7 +22,6 @@ import '../../../provider/chat/chatProvider.dart';
 import '../../../provider/profile/profileProvider.dart';
 import '../../../provider/stream/streamProvider.dart';
 import '../../call/audioCall/audio.dart';
-import '../Groups/groupList.dart';
 import '../UsersChat/audioMessage.dart';
 import '../UsersChat/messageInput.dart';
 
@@ -32,18 +29,25 @@ class GroupChatScreen extends StatelessWidget {
   final String groupName;
   final String groupImage;
   final String groupID;
+  final String? admin;
 
-  GroupChatScreen({super.key, required this.groupName, required this.groupImage, required this.groupID,});
+  GroupChatScreen({super.key,
+    required this.groupName,
+    required this.groupImage,
+    required this.groupID,
+     this.admin,
+  });
   TextEditingController messageController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     final action = Provider.of<ActionProvider>(context, listen: false);
-    final profile = Provider.of<ProfileProvider>(context, listen: false);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: primaryColor,
         shadowColor: primaryColor,
-        centerTitle: false, 
+        centerTitle: false,
         leading: GestureDetector(
             onTap: () {
               Get.back();
@@ -58,8 +62,7 @@ class GroupChatScreen extends StatelessWidget {
               'groupName': groupName,
               'groupImage': groupImage,
               'groupID': groupID,
-
-
+              'admin': admin,
             }
             );
           },
@@ -72,9 +75,7 @@ class GroupChatScreen extends StatelessWidget {
                   color: whiteColor, borderRadius: BorderRadius.circular(50)),
               child: ClipRRect(
                   borderRadius: BorderRadius.circular(50),
-                  child: groupImage.isNotEmpty
-                      ? Image.network(groupImage)
-                      : Image.asset(fit: BoxFit.cover, AppAssets.noProfile)),
+                  child: CachedShimmerImageWidget(imageUrl: groupImage)),
             ),
             title: AppTextWidget(
               text: groupName.isNotEmpty ? groupName : 'Unknown',
@@ -94,10 +95,6 @@ class GroupChatScreen extends StatelessWidget {
           GestureDetector(
               onTap: () {},
               child: SvgPicture.asset(AppIcons.videoCall, height: 18)),
-          const SizedBox(width: 16),
-          GestureDetector(
-              onTap: () {},
-              child: SvgPicture.asset(AppIcons.more, height: 18)),
           const SizedBox(width: 16),
         ],
       ),
@@ -130,7 +127,8 @@ class GroupChatScreen extends StatelessWidget {
 
                       return _buildMessageBubble(context, action, message,
                           isSender: message.senderId == currentUser,
-                          time: message.createdAt);
+                          time: message.createdAt,
+                      );
                     },
                     padding: const EdgeInsets.all(8.0),
                   );
@@ -145,95 +143,6 @@ class GroupChatScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  void _showEditNameDialog(BuildContext context) {
-    TextEditingController nameController = TextEditingController(text: groupName);
-    MyCustomDialog.show(
-      title: 'Edit Group Name',
-      showTextField: true,
-      content: "Change Group Name",
-      cancel: "Cancel",
-      yes: "Save",
-      hintText: 'Enter Group Name',
-      color: Colors.black,
-      showTitle: true,
-      textController: nameController,
-      cancelTap: () {
-        Get.back();
-      },
-      yesTap: () async {
-        try {
-          if (nameController.text.trim().isEmpty) {
-            AppUtils().showToast(text: 'Please enter a group name');
-            return;
-          }
-
-          await FirebaseFirestore.instance
-              .collection('groupChats')
-              .doc(groupID)
-              .update({
-            'groupName': nameController.text.trim()
-          });
-
-          AppUtils().showToast(text: 'Group name updated successfully');
-          Get.back();
-        } catch (e) {
-          log('Error updating group name: $e');
-          AppUtils().showToast(text: 'Error updating group name');
-        }
-      },
-    );
-  }
-
-  void _showImagePicker(BuildContext context, ProfileProvider provider) {
-    Get.bottomSheet(
-      Container(
-        width: 100.w,
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: primaryColor,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircleAvatar(
-              radius: 50,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(100),
-                child: CachedShimmerImageWidget(imageUrl: provider.imageUrl.toString()),
-              
-              ) ,
-            ),
-            ButtonWidget(
-              height: 5.h,
-              width: 40.w,
-              fontWeight: FontWeight.w400,
-              text: "Gallery",
-              onClicked: provider.pickProfileImage,
-            ),
-            const SizedBox(height: 20),
-            ButtonWidget(
-              height: 5.h,
-              width: 40.w,
-              fontWeight: FontWeight.w400,
-              text: "Camera",
-              onClicked: provider.pickProfileImageFromCamera,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-
-  void _showAddMembersDialog(BuildContext context) {
-    // Add implementation for adding members
-  }
-
-  void _showRemoveMembersDialog(BuildContext context) {
-    // Add implementation for removing members
   }
 
   // Message Bubble

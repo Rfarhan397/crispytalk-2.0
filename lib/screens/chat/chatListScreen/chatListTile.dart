@@ -1,15 +1,10 @@
 import 'dart:developer';
-
 import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
-import 'package:get/get.dart';
-
 import '../../../model/res/components/shimmer.dart';
-import '../../../model/res/constant/app_assets.dart';
-import '../../../model/res/routes/routes_name.dart';
 import '../../../model/res/widgets/app_text.dart.dart';
 import '../../../provider/chat/chatProvider.dart';
 
@@ -20,12 +15,12 @@ class ChatTileScreen extends StatelessWidget {
   final String createdAt;
 
   const ChatTileScreen({
-    Key? key,
+    super.key,
     required this.chatId,
     required this.otherUserId,
     required this.lastMessage,
     required this.createdAt,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +61,7 @@ class ChatTileScreen extends StatelessWidget {
                 status: userStatus,
                 fcmToken: fcmToken
             );
-            log('fcm token in chat list is ::${fcmToken}');
+            log('fcm token in chat list is ::${fcmToken}, ${chatId}');
 
           },
           leading: Stack(

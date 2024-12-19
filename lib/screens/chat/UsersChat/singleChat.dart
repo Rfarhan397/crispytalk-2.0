@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:crispy/provider/current_user/current_user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
@@ -77,7 +78,7 @@ class ChatScreen extends StatelessWidget {
         actions: [
           GestureDetector(
               onTap: () {
-                audioCall();
+                audioCall(context);
               },
               child: SvgPicture.asset(AppIcons.call, height: 18)),
           const SizedBox(width: 16),
@@ -189,7 +190,6 @@ class ChatScreen extends StatelessWidget {
                         )
                       : GestureDetector(
                           onTap: () {
-                            log('message');
                             Get.to(FullImagePreview(
                               image: message.message,
                             ));
@@ -221,22 +221,22 @@ class ChatScreen extends StatelessWidget {
     );
   }
 
-  void audioCall() async {
+  void audioCall(context) async {
     final id = generateRandomId();
-    final user = await StreamDataProvider().getCurrentUser();
+    final user = Provider.of<CurrentUserProvider>(context,listen: false).currentUser;
 
     Get.to(
       () => AudioCallScreen(
         callId: id,
         isCaller: true,
-        callerImage: user.profileUrl,
+        callerImage: user!.profileUrl,
         callerName: user.name,
       ),
     );
     FCMService().sendNotification(
       fcmToken,
       'Audio Call Request',
-      '${user.name} is calling you ...',
+      '${user!.name} is calling you ...',
       user.userUid,
       additionalData: {
         'callID': id,
@@ -250,21 +250,21 @@ class ChatScreen extends StatelessWidget {
 
   void sendCallRequest(BuildContext context) async {
     final id = generateRandomId();
-    final user = await StreamDataProvider().getCurrentUser();
+    final user = Provider.of<CurrentUserProvider>(context,listen: false).currentUser;
 
     Get.to(
       () => VideoCallScreen(
         callId: id,
         isCaller: true,
-        callerImage: user.profileUrl,
+        callerImage: user!.profileUrl,
         callerName: user.name,
       ),
     );
     FCMService().sendNotification(
       fcmToken,
       'Video Call Request',
-      '${user.name} is calling you ...',
-      user.userUid,
+      '${user?.name} is calling you ...',
+      user!.userUid,
       additionalData: {
         'callID': id,
         'name': user.name,

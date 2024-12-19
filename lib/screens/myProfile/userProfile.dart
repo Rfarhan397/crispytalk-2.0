@@ -1,12 +1,16 @@
 import 'dart:developer';
+import 'dart:ffi';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crispy/model/res/constant/app_utils.dart';
 import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:sizer/sizer.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 import '../../constant.dart';
 import '../../model/mediaPost/mediaPost_model.dart';
@@ -18,6 +22,7 @@ import '../../model/res/routes/routes_name.dart';
 import '../../model/res/widgets/app_text.dart.dart';
 import '../../provider/action/action_provider.dart';
 import '../../provider/current_user/current_user_provider.dart';
+import '../../provider/savedPost/savedPostProvider.dart';
 import '../ImageDetail/image_detail.dart';
 import '../video/mediaViewerScreen.dart';
 
@@ -78,13 +83,14 @@ class UserProfile extends StatelessWidget {
           )),
     );
   }
+
   // Build a menu item with consistent styling
   PopupMenuItem<String> buildMenuItem(
-      BuildContext context,
-      String value,
-      String icon,
-      ActionProvider menuProvider,
-      ) {
+    BuildContext context,
+    String value,
+    String icon,
+    ActionProvider menuProvider,
+  ) {
     return PopupMenuItem<String>(
       value: value,
       child: Container(
@@ -130,7 +136,10 @@ class UserProfileCurrentUser extends StatelessWidget {
     final userData = currentUserProvider.currentUser;
 
     if (userData == null) {
-      return const Center(child: CircularProgressIndicator(color: primaryColor,));
+      return const Center(
+          child: CircularProgressIndicator(
+        color: primaryColor,
+      ));
     }
 
     return Column(
@@ -144,29 +153,194 @@ class UserProfileCurrentUser extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Align(
-                  alignment: Alignment.center,
-                  child: UserDetails(
-                      name: userData.name,
-                      bio: userData.bio,
-                  ),
+                alignment: Alignment.center,
+                child: UserDetails(
+                  name: userData.name,
+                  bio: userData.bio,
+                ),
               ),
               Consumer<CurrentUserProvider>(
-               builder: (context, userData, child) {
-                 return FollowAndActionButtons(
-                   followers: userData.currentUser!.followers,
-                   following: userData.currentUser!.following,
-                   likes: userData.currentUser!.likes,
-                 );
-               },
+                builder: (context, userData, child) {
+                  return FollowAndActionButtons(
+                    followers: userData.currentUser!.followers,
+                    following: userData.currentUser!.following,
+                    likes: userData.currentUser!.likes,
+                  );
+                },
               ),
               const SizedBox(height: 10),
-              const ProfileActions(),
+              userData.facebook != null || userData.instagram != null
+                  ? Align(
+                      alignment: Alignment.center,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 15.w),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            if (userData.facebook != null && userData.facebook!.isNotEmpty)
+                              buildSocialLink(
+                                'Facebook',
+                                AppAssets.fb,
+                                40.0,
+                                40.0,
+                                onTap: () async {
+                                  if (userData.facebook != null) {
+                                    launchUrl(Uri.parse(userData.facebook!));
+                                  }else {
+                                    AppUtils().showToast(text: 'Error');
+                                  }
+                                },
+                              ),
+                            if (userData.instagram != null && userData.instagram!.isNotEmpty)
+                              buildSocialLink(
+                                'instagram',
+                                AppAssets.insta,
+                                25.0,
+                                25.0,
+                                onTap: () async {
+                                  if (userData.instagram != null) {
+                                    launchUrl(Uri.parse(userData.instagram!));
+                                  }else {
+                                    AppUtils().showToast(text: 'Error');
+                                  }
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : const Align(
+                      alignment: Alignment.center,
+                      child: AppTextWidget(
+                        text: 'No Social Link',
+                      ),
+                    ),
+              const SizedBox(height: 10),
+              ProfileActions(userData.instagram.toString()),
               SizedBox(height: 2.h),
-              _MediaWrap(userUid: userData.userUid),
+              DefaultTabController(
+                length: 2,
+                child: Column(
+                  children: [
+                    const TabBar(
+                      tabs: [
+                        Tab(
+                          icon: Icon(Icons.grid_on),
+                          text: 'Posts',
+                        ),
+                        Tab(
+                          icon: Icon(Icons.favorite),
+                          text: 'Favourites',
+                        ),
+                      ],
+                      labelColor: primaryColor,
+                      unselectedLabelColor: Colors.grey,
+                      indicatorColor: primaryColor,
+                    ),
+                    SizedBox(
+                      height: 500,
+                      child: TabBarView(
+                        children: [
+                          _MediaWrap(userUid: userData.userUid),
+                          Consumer<SavedPostsProvider>(
+                            builder: (context, savedPostsProvider, child) {
+                              if (savedPostsProvider.isLoading) {
+                                return const Center(child: CircularProgressIndicator());
+                              }
+                              
+                              if (savedPostsProvider.error != null) {
+                                return Center(child: Text(savedPostsProvider.error!));
+                              }
+                              
+                              if (savedPostsProvider.savedPosts.isEmpty) {
+                                return const Center(child: Text("No saved posts yet."));
+                              }
+
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Wrap(
+                                  alignment: WrapAlignment.start,
+                                  spacing: 10,
+                                  runSpacing: 20,
+                                  children: savedPostsProvider.savedPosts.map((media) {
+                                    final mediaType = determineMediaType(media.mediaUrl);
+                                    return GestureDetector(
+                                      onTap: () {
+                                        if (media.mediaUrl.isNotEmpty) {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  VideoPlayerScreen(videoUrl: media.mediaUrl),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      child: Container(
+                                        height: 200,
+                                        width: MediaQuery.of(context).size.width / 2 - 15,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(15),
+                                          color: Colors.black12,
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(15),
+                                          child: mediaType == "image"
+                                              ? CachedShimmerImageWidget(imageUrl: media.mediaUrl)
+                                              : VideoThumbnail(videoUrl: media.mediaUrl),
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  String determineMediaType(String url) {
+    if (RegExp(r'\.jpe?g$|\.png$', caseSensitive: false).hasMatch(url)) {
+      return 'image';
+    } else if (RegExp(r'\.mov|\.avi|\.mp4$', caseSensitive: false).hasMatch(url)) {
+      return 'video';
+    }
+    return 'unknown';
+  }
+
+  Widget buildSocialLink(String title, String image, double height, width,
+      {required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Image.asset(
+            image,
+            height: height,
+            width: width,
+            fit: BoxFit.cover,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: AppTextWidget(
+              text: title,
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+              maxLines: 2,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -197,7 +371,7 @@ class BackgroundImage extends StatelessWidget {
 class ProfileImage extends StatelessWidget {
   final String? profileUrl;
 
-  const ProfileImage({required this.profileUrl});
+  const ProfileImage({super.key, required this.profileUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -205,9 +379,10 @@ class ProfileImage extends StatelessWidget {
       offset: Offset(0, -10.h),
       child: GestureDetector(
         onTap: () {
-      Get.to(ImageDetailScreen(
-        imageUrl: profileUrl.toString(),
-      ));},
+          Get.to(ImageDetailScreen(
+            imageUrl: profileUrl.toString(),
+          ));
+        },
         child: Container(
           height: 100,
           width: 100,
@@ -217,8 +392,7 @@ class ProfileImage extends StatelessWidget {
           ),
           child: ClipRRect(
               borderRadius: BorderRadius.circular(56),
-              child: CachedShimmerImageWidget(imageUrl: profileUrl.toString())
-          ),
+              child: CachedShimmerImageWidget(imageUrl: profileUrl.toString())),
         ),
       ),
     );
@@ -259,11 +433,11 @@ class FollowAndActionButtons extends StatelessWidget {
   final List<dynamic>? likes;
 
   const FollowAndActionButtons({
-    Key? key,
+    super.key,
     this.followers,
     this.following,
     this.likes,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -278,7 +452,8 @@ class FollowAndActionButtons extends StatelessWidget {
               (followers?.length ?? 0).toString(),
               "Followers",
               onTap: () {
-                Get.toNamed(RoutesName.followerScreen,
+                Get.toNamed(
+                  RoutesName.followerScreen,
                   arguments: {
                     'userId': currentUser, // Pass the current user's ID
                   },
@@ -290,11 +465,11 @@ class FollowAndActionButtons extends StatelessWidget {
               (following?.length ?? 0).toString(),
               "Following",
               onTap: () {
-                Get.toNamed(RoutesName.followingScreen,
+                Get.toNamed(
+                  RoutesName.followingScreen,
                   arguments: {
                     'userId': currentUser, // Pass the current user's ID
                   },
-
                 );
               },
             ),
@@ -336,10 +511,12 @@ class FollowAndActionButtons extends StatelessWidget {
 }
 
 class ProfileActions extends StatelessWidget {
-  const ProfileActions();
-
+  const ProfileActions(this.profile);
+  final String profile;
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -354,12 +531,20 @@ class ProfileActions extends StatelessWidget {
         SizedBox(width: 2.w),
         AppButtonWidget(
           prefixIcon: SvgPicture.asset(AppIcons.shareProfile),
-          onPressed: () {},
+          onPressed: () {
+            share(profile);
+          },
           text: "Share Profile",
           radius: 12,
         ),
       ],
     );
+  }
+
+  void share(String mediaUrl) {
+    if (mediaUrl.isNotEmpty) {
+      Share.share(mediaUrl, subject: "Check out this profile!");
+    }
   }
 }
 
@@ -390,16 +575,12 @@ class _MediaWrap extends StatelessWidget {
             .toList();
         String mediaType = '';
         String determineMediaType(String url) {
-          if (
-          RegExp(r'\.jpe?g$|\.png$',
-              caseSensitive: false)
-              .hasMatch(url)) {
+          if (RegExp(r'\.jpe?g$|\.png$', caseSensitive: false).hasMatch(url)) {
             return 'image';
-          } else if (
-          RegExp(r'\.mov|\.avi|\.mp4$',
-              caseSensitive: false,
-          )
-              .hasMatch(url)) {
+          } else if (RegExp(
+            r'\.mov|\.avi|\.mp4$',
+            caseSensitive: false,
+          ).hasMatch(url)) {
             return 'video';
           }
           return 'unknown';
@@ -408,7 +589,7 @@ class _MediaWrap extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.all(8.0),
           child: Wrap(
-                 alignment: WrapAlignment.start,
+            alignment: WrapAlignment.start,
             spacing: 10,
             runSpacing: 20,
             children: mediaList.map((media) {
@@ -427,18 +608,18 @@ class _MediaWrap extends StatelessWidget {
                 },
                 child: Container(
                   height: 200,
-                  width: MediaQuery.of(context).size.width / 2 -
-                      15,
+                  width: MediaQuery.of(context).size.width / 2 - 15,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(15),
                     color: Colors.black12,
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: mediaType == "image"
-                            ? CachedShimmerImageWidget(imageUrl: media.mediaUrl)
-                            : VideoThumbnail(videoUrl: media.mediaUrl,)
-                  ),
+                      borderRadius: BorderRadius.circular(15),
+                      child: mediaType == "image"
+                          ? CachedShimmerImageWidget(imageUrl: media.mediaUrl)
+                          : VideoThumbnail(
+                              videoUrl: media.mediaUrl,
+                            )),
                 ),
               );
             }).toList(),
@@ -509,7 +690,6 @@ class ImageCard extends StatelessWidget {
     );
   }
 }
-
 
 class VideoThumbnail extends StatefulWidget {
   final String videoUrl;

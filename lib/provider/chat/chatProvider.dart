@@ -432,14 +432,12 @@ class ChatProvider with ChangeNotifier {
       // Reference to the chat document
       final chatDocRef = FirebaseFirestore.instance.collection(collection).doc(chatRoomId);
 
-      // Step 1: Delete all messages in the subcollection
       final messagesQuerySnapshot =
       await chatDocRef.collection('messages').get();
       for (var doc in messagesQuerySnapshot.docs) {
         await doc.reference.delete();
       }
 
-      // Step 2: Delete the chat document
       await chatDocRef.delete();
 
       print('Chat and its messages deleted successfully');

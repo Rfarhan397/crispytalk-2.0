@@ -112,7 +112,16 @@ class VideoScreen extends StatelessWidget {
                                 child: Column(
                                   children: [
                                     GestureDetector(
-                                      onTap: () {},
+                                      onTap: () {
+                                        if (video.userDetails?.userUid != null) {
+                                          Get.to(
+                                            OtherUserProfile(
+                                              userID: video.userDetails!.userUid,
+                                              userName: video.userDetails?.name ?? 'Unknown',
+                                            ),
+                                          );
+                                        }
+                                      },
                                       child: Column(
                                         children: [
                                           SizedBox(
@@ -236,38 +245,24 @@ class VideoScreen extends StatelessWidget {
                               Positioned(
                                 bottom: 40,
                                 left: 10,
-                                child: GestureDetector(
-                                  onTap:() {
-                                    if (video.userDetails?.userUid != null) {
-                                      Get.to(
-                                        OtherUserProfile(
-                                          userID: video.userDetails!.userUid,
-                                          userName: video.userDetails?.name ?? 'Unknown',
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  child: SizedBox(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        // Profile Name
-                                        AppTextWidget(
-                                          text: video.userDetails?.name ?? "N/A",
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 18,
-                                        ),
-                                        const SizedBox(height: 5),
+                                child: SizedBox(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      AppTextWidget(
+                                        text: video.userDetails?.name.capitalizeFirst ?? "N/A",
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 18,
+                                      ),
+                                      const SizedBox(height: 5),
 
-                                        // Video Description
-                                        AppTextWidget(
-                                          text: video.title.isNotEmpty ? video.title : "N/A",
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                        ),
-                                      ],
-                                    ),
+                                      AppTextWidget(
+                                        text: video.title.isNotEmpty ? video.title : "N/A",
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -284,7 +279,7 @@ class VideoScreen extends StatelessWidget {
                     top: 7.h,
                     left: MediaQuery.of(context).size.width * 0.4,
                     child: const AppTextWidget(
-                        text: "For You", color: Colors.grey, fontSize: 18),
+                        text: "Followings", color: Colors.grey, fontSize: 18),
                   ),
 
                   // Profile, Name, and Description at the Bottom

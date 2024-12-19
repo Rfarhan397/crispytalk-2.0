@@ -11,8 +11,10 @@ import 'package:crispy/provider/mediaSelection/mediaSelectionProvider.dart';
 import 'package:crispy/provider/notification/notificationProvider.dart';
 import 'package:crispy/provider/otherUserData/otherUserDataProvider.dart';
 import 'package:crispy/provider/passwpordVisibility/passwordVisibilityProvider.dart';
+import 'package:crispy/provider/postCache/postCacheProvider.dart';
 import 'package:crispy/provider/profile/profileProvider.dart';
 import 'package:crispy/provider/question/questionProvider.dart';
+import 'package:crispy/provider/savedPost/savedPostProvider.dart';
 import 'package:crispy/provider/stream/streamProvider.dart';
 import 'package:crispy/provider/theme/theme_provider.dart';
 import 'package:crispy/provider/user_provider/user_provider.dart';
@@ -30,6 +32,7 @@ import 'model/res/routes/routes.dart';
 import 'model/res/routes/routes_name.dart';
 import 'model/services/fcm/fcm_services.dart';
 import 'model/services/sharedpreference/sp_service.dart';
+import 'provider/suggested_users/suggested_users_provider.dart';
 
 
 
@@ -93,6 +96,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => VideoCallProvider()),
         ChangeNotifierProvider(create: (_) => CurrentUserProvider()),
         ChangeNotifierProvider(create: (_) => SearchProvider()),
+        ChangeNotifierProvider(create: (_) => SavedPostsProvider()),
+        ChangeNotifierProvider(create: (_) => PostCacheProvider()),
+        ChangeNotifierProvider(create: (_) => SuggestedUsersProvider()),
       ],
       child: Consumer<AppLifeCycleProvider>(
           builder: (context,provider,child) {

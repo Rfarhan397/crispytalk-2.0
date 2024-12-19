@@ -1,3 +1,4 @@
+import 'package:crispy/constant.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -11,12 +12,19 @@ class TabViewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2, // Two tabs (Chats and Groups)
+      length: 2,
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          backgroundColor: Colors.white,
+          backgroundColor: primaryColor,
           title: const TabBar(
+            dividerColor: secondaryColor,
+            indicatorColor: secondaryColor,
+            labelColor: secondaryColor,
+            labelStyle: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
             tabs: [
               Tab(text: 'Chats'),
               Tab(text: 'Groups'),

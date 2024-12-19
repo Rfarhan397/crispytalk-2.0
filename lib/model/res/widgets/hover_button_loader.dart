@@ -84,7 +84,7 @@ class HoverLoadingButton extends StatelessWidget {
                       height: height,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(radius),
-                        gradient: LinearGradient(
+                        gradient: const LinearGradient(
                           colors: [Colors.deepOrange, Colors.deepOrange],
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
@@ -93,9 +93,12 @@ class HoverLoadingButton extends StatelessWidget {
                     ),
                   Center(
                     child: hoverProvider.isLoading(index ?? 0)
-                        ? const CircularProgressIndicator(
-                      color: AppColors.appBackgroundColor,
-                    )
+                        ? const Padding(
+                          padding: EdgeInsets.all(10.0),
+                          child: CircularProgressIndicator(
+                                                color: AppColors.appBackgroundColor,
+                                              ),
+                        )
                         : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

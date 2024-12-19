@@ -7,6 +7,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../constant.dart';
 import '../../../model/mediaPost/mediaPost_model.dart';
 import '../../../model/res/components/app_back_button.dart';
@@ -21,22 +22,22 @@ import '../../../model/res/widgets/customDialog.dart';
 import '../../../model/user_model/user_model.dart';
 import '../../../provider/action/action_provider.dart';
 import '../../../provider/chat/chatProvider.dart';
-import '../../../provider/otherUserData/otherUserDataProvider.dart';
 import '../../../provider/stream/streamProvider.dart';
 import '../../video/mediaViewerScreen.dart';
 import '../userProfile.dart';
 
 class OtherUserProfile extends StatelessWidget {
-  const OtherUserProfile(
+    OtherUserProfile(
       {super.key, required this.userID, required this.userName});
 
   final String userID;
   final String userName;
+  TextEditingController controller = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    final streamDataProvider =
-        Provider.of<StreamDataProvider>(context, listen: false);
+    final streamDataProvider = Provider.of<StreamDataProvider>(context, listen: false);
+    final action = Provider.of<ActionProvider>(context, listen: false);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -45,8 +46,8 @@ class OtherUserProfile extends StatelessWidget {
         shadowColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         backgroundColor: Colors.transparent,
-        leading: AppBackButton(),
-        actions: [_buildPopupMenu(context)],
+        leading: const AppBackButton(),
+        actions: [_buildPopupMenu(context,action)],
       ),
       body: StreamBuilder(
         stream: streamDataProvider.getSingleUser(userID),
@@ -68,24 +69,20 @@ class OtherUserProfile extends StatelessWidget {
     );
   }
 
-  Widget _buildPopupMenu(BuildContext context) {
+  Widget _buildPopupMenu(BuildContext context,ActionProvider action) {
     return PopupMenuButton<String>(
       surfaceTintColor: primaryColor,
       color: primaryColor,
       icon: SvgPicture.asset(AppIcons.menu),
-      onSelected: (value) => _handlePopupMenuSelection(value, context),
+      onSelected: (value) => _handlePopupMenuSelection(value, context, action),
       itemBuilder: (context) => [
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: 'Block',
-          onTap: () {
-            blockUser();
-            Get.back();
-          },
-          child: const Text('Block', style: TextStyle(color: Colors.white)),
+          child: Text('Block', style: TextStyle(color: Colors.white)),
         ),
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: 'Report',
-          child: const Text('Report', style: TextStyle(color: Colors.white)),
+          child: Text('Report', style: TextStyle(color: Colors.white)),
         ),
       ],
     );
@@ -101,7 +98,7 @@ class OtherUserProfile extends StatelessWidget {
         'blocks': FieldValue.arrayUnion([userID]),
         'following': FieldValue.arrayRemove([userID]),
       });
-
+      Get.back();
       // Update blocked user's followers
       batch.update(usersCollection.doc(userID), {
         'followers': FieldValue.arrayRemove([currentUser]),
@@ -113,6 +110,7 @@ class OtherUserProfile extends StatelessWidget {
         text: 'You have blocked $userName',
         bgColor: primaryColor,
       );
+
     } catch (e) {
       log("Error blocking user: $e");
       AppUtils().showToast(
@@ -122,7 +120,7 @@ class OtherUserProfile extends StatelessWidget {
     }
   }
 
-  void _handlePopupMenuSelection(String value, BuildContext context) {
+  void _handlePopupMenuSelection(String value, BuildContext context,ActionProvider action) {
     switch (value) {
       case 'Block':
         showDialog(
@@ -131,7 +129,9 @@ class OtherUserProfile extends StatelessWidget {
             content: 'Are you sure you want to Block?',
             cancel: "Cancel",
             yes: "Block",
-            userID: '',
+            yesTap: () {
+              blockUser();
+            },
           ),
         );
         break;
@@ -140,13 +140,19 @@ class OtherUserProfile extends StatelessWidget {
         showDialog(
           context: context,
           builder: (_) => CustomDialog(
-            userID: userID,
             content: 'Why you report this user? Write a short Description',
             title: 'Report User?',
             cancel: "Cancel",
             yes: "Submit",
             showTextField: true,
             hintText: 'Write the Description',
+            textController: controller,
+            yesTap: () {
+              action.reportUser(text: controller.text.trim(),userID: userID);
+              Get.back();
+              controller.clear();
+              AppUtils().showToast(text: 'You reported this user successfully');
+            },
           ),
         );
         break;
@@ -158,9 +164,9 @@ class UserProfileOtherUser extends StatelessWidget {
   final UserModelT userModel;
 
   const UserProfileOtherUser({
-    Key? key,
+    super.key,
     required this.userModel,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -179,6 +185,49 @@ class UserProfileOtherUser extends StatelessWidget {
                 UserDetails(postData: userModel),
                 FollowAndActionButtons(postData: userModel),
                 SizedBox(height: 3.w),
+                userModel.facebook != null && userModel.facebook!.isNotEmpty ?
+                Align(
+                  alignment: Alignment.center,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 15.w),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        buildSocialLink(
+                          'Facebook',
+                          AppAssets.fb,
+                          40.0,
+                          40.0,
+                          onTap: () {
+                            if (userModel.facebook != null) {
+                              launchUrl(Uri.parse(userModel.facebook!));
+                            }else {
+                              AppUtils().showToast(text: 'Error');
+                            }
+                          },
+                        ),
+                        buildSocialLink(
+                          'Instagram',
+                          AppAssets.insta,
+                          25.0,
+                          25.0,
+                          onTap: () {
+                            if (userModel.instagram != null) {
+                              launchUrl(Uri.parse(userModel.instagram!));
+                            }else {
+                              AppUtils().showToast(text: 'Error');
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ):
+                const Align(
+                  alignment: Alignment.center,
+                  child: AppTextWidget(text: 'No Social Link',),
+                ),
+                SizedBox(height: 3.w),
                 _otherActionButton(userModel),
                 SizedBox(height: 2.h),
                 _MediaWrap(userUid: userModel.userUid),
@@ -189,11 +238,32 @@ class UserProfileOtherUser extends StatelessWidget {
       ],
     );
   }
+  Widget buildSocialLink(String title, String image,double height,width,
+      {required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Image.asset(image,height: height,width: width,fit: BoxFit.cover,),
+
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: AppTextWidget(
+              text: title,
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+              maxLines: 2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class BackgroundImage extends StatelessWidget {
   final String profileUrl;
-  const BackgroundImage({required this.profileUrl});
+  const BackgroundImage({super.key, required this.profileUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -215,7 +285,7 @@ class BackgroundImage extends StatelessWidget {
 
 class ProfileImage extends StatelessWidget {
   final String profileUrl;
-  const ProfileImage({required this.profileUrl});
+  const ProfileImage({super.key, required this.profileUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -250,7 +320,7 @@ class ProfileImage extends StatelessWidget {
 
 class UserDetails extends StatelessWidget {
   final UserModelT postData;
-  const UserDetails({required this.postData});
+  const UserDetails({super.key, required this.postData});
 
   @override
   Widget build(BuildContext context) {
@@ -260,13 +330,13 @@ class UserDetails extends StatelessWidget {
         children: [
           AppTextWidget(
             textAlign: TextAlign.center,
-            text: postData.name ?? 'Unknown User',
+            text: postData.name,
             fontWeight: FontWeight.w600,
             color: primaryColor,
             fontSize: 18,
           ),
           AppTextWidget(
-            text: postData.bio ?? 'N/A',
+            text: postData.bio,
             fontWeight: FontWeight.w400,
             color: AppColors.textGrey,
             fontSize: 12,

@@ -12,6 +12,7 @@ import '../../../model/res/components/shimmer.dart';
 import '../../../model/res/widgets/app_text.dart.dart';
 import '../../../provider/action/action_provider.dart';
 import '../../myProfile/otherUserProfile/otherUserProfile.dart';
+import '../../../provider/suggested_users/suggested_users_provider.dart';
 
 class SuggestedUsers extends StatefulWidget {
   final String currentUserId;
@@ -52,8 +53,10 @@ class _SuggestedUsersState extends State<SuggestedUsers> {
                       top: 3,
                       right: 8,
                       child: IconButton(
-                        icon: const Icon(Icons.close, color: primaryColor, size: 20),
-                        onPressed: () => setState(() => isSuggestionVisible = false),
+                        icon: const Icon(Icons.close,
+                            color: primaryColor, size: 20),
+                        onPressed: () =>
+                            setState(() => isSuggestionVisible = false),
                       ),
                     ),
                   ],
@@ -68,47 +71,22 @@ class _SuggestedUsersState extends State<SuggestedUsers> {
 
 class SuggestionList extends StatelessWidget {
   final String currentUserId;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  SuggestionList({required this.currentUserId, Key? key}) : super(key: key);
-
-  Stream<List<DocumentSnapshot>> getSuggestedUsers() {
-    return _firestore.collection('users').doc(currentUserId).snapshots().asyncMap((userDoc) async {
-      if (!userDoc.exists) return [];
-
-      final userData = userDoc.data() as Map<String, dynamic>;
-      final blockedUserIds = List<String>.from(userData['blocks'] ?? []);
-      final followingIds = List<String>.from(userData['following'] ?? []);
-
-      // Combine all IDs to exclude (blocked users, following, and current user)
-      final excludeIds = {...blockedUserIds, ...followingIds, currentUserId};
-      // Get all users first
-      final allUsers = await _firestore.collection('users').get();
-      
-      // Filter users manually
-      final filteredDocs = allUsers.docs.where((doc) {
-        final uid = doc.get('userUid') as String;
-        return !excludeIds.contains(uid);
-      }).take(10).toList();
-
-      return filteredDocs;
-    });
-  }
+  const SuggestionList({required this.currentUserId, super.key});
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<DocumentSnapshot>>(
-      stream: getSuggestedUsers(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+    return Consumer<SuggestedUsersProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoading) {
           return const SuggestionCardShimmer();
         }
 
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+        if (provider.error != null) {
+          return Center(child: Text('Error: ${provider.error}'));
         }
 
-        final users = snapshot.data ?? [];
+        final users = provider.suggestedUsers;
         if (users.isEmpty) {
           return const Center(child: Text('No suggestions available.'));
         }
@@ -120,9 +98,9 @@ class SuggestionList extends StatelessWidget {
             final userData = users[index].data() as Map<String, dynamic>;
             return GestureDetector(
               onTap: () => Get.to(() => OtherUserProfile(
-                userID: userData['userUid'],
-                userName: userData['name'],
-              )),
+                    userID: userData['userUid'],
+                    userName: userData['name'],
+                  )),
               child: SuggestionCard(
                 profileImage: userData['profileUrl'] ?? '',
                 username: userData['name'] ?? 'Unknown User',
@@ -165,13 +143,12 @@ class SuggestionCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircleAvatar(
-            radius: 22,
-            backgroundColor: primaryColor,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(100),
-              child: CachedShimmerImageWidget(imageUrl: profileImage),
-            )
-          ),
+              radius: 22,
+              backgroundColor: primaryColor,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(100),
+                child: CachedShimmerImageWidget(imageUrl: profileImage),
+              )),
           SizedBox(height: 0.5.h),
           AppTextWidget(
             text: username.capitalizeFirst.toString(),
@@ -189,7 +166,10 @@ class SuggestionCard extends StatelessWidget {
           ),
           SizedBox(height: 1.h),
           StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance.collection('users').doc(userId).snapshots(),
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(userId)
+                .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const SizedBox(
@@ -199,8 +179,11 @@ class SuggestionCard extends StatelessWidget {
                 );
               }
 
-              final isFollowed = snapshot.hasData && snapshot.data!.exists &&
-                               (snapshot.data!.data() as Map<String, dynamic>)['followers']?.contains(currentUser) == true;
+              final isFollowed = snapshot.hasData &&
+                  snapshot.data!.exists &&
+                  (snapshot.data!.data() as Map<String, dynamic>)['followers']
+                          ?.contains(currentUser) ==
+                      true;
 
               return AppButtonWidget(
                 width: 20.w,
@@ -209,8 +192,10 @@ class SuggestionCard extends StatelessWidget {
                 radius: 100,
                 buttonColor: isFollowed ? primaryColor : Colors.grey,
                 textColor: Colors.white,
-                onPressed: () => Provider.of<ActionProvider>(context, listen: false)
-                    .toggleFollow(currentUser, userId).then((_){
+                onPressed: () =>
+                    Provider.of<ActionProvider>(context, listen: false)
+                        .toggleFollow(currentUser, userId)
+                        .then((_) {
                   current.fetchCurrentUserDetails();
                 }),
                 fontSize: 13,

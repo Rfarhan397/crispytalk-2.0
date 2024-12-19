@@ -79,14 +79,6 @@ class ChatItemAudioMessage extends StatelessWidget {
                 ),
                 innerPadding: 6,
               ),
-              SizedBox(height: 0.3.h),
-              AppTextWidget(
-                text: message.createdAt,
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-                color:
-                !isUser ? const Color(0xffA1A1BC) : const Color(0xffDEDEDE),
-              )
             ],
           ),
         ),

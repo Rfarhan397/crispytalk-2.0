@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,12 +5,13 @@ import 'package:sizer/sizer.dart';
 import '../../../constant.dart';
 import 'app_text.dart.dart';
 import 'app_text_field.dart';
+import 'dart:developer';
 
 class CustomDialog extends StatelessWidget {
   final String? content, cancel, yes, hintText, title;
   final TextEditingController? textController;
   final bool showTextField, showTitle;
-  final String userID;
+  final VoidCallback? yesTap;
 
   CustomDialog({
     super.key,
@@ -22,35 +22,13 @@ class CustomDialog extends StatelessWidget {
     this.textController,
     this.hintText,
     this.title,
-    this.showTitle = false, required this.userID,
+    this.showTitle = false,
+     this.yesTap,
   });
-  TextEditingController controller = TextEditingController();
 
-  Future<void> storeTextInFirestore({
-    String? userID, // Optional: If you want to specify a document ID
-    String? text, // Optional: If you want to specify a document ID
-  }) async {
-    try {
-      final docRef = FirebaseFirestore.instance
-          .collection("reports")
-          .doc();
-      await docRef.set({
-        'text': text,
-        'createdAt': DateTime.now(),
-        'reportTo':userID,
-        'reportBy':currentUser,
-        'docID':docRef.id
-      });
 
-      print("Text stored successfully in Firestore.");
-    } catch (e) {
-      print("Failed to store text in Firestore: $e");
-      rethrow;
-    }
-  }
   @override
   Widget build(BuildContext context) {
-    print("Current User ID : $currentUser");
     return Dialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
@@ -83,7 +61,7 @@ class CustomDialog extends StatelessWidget {
                     child: AppTextField(
                       radius: 8,
                       hintText: hintText ?? '',
-                      controller: controller, // Use the controller if provided
+                      controller: textController, // Use the controller if provided
                     ),
                   ),
                 SizedBox(height: 1.h),
@@ -115,11 +93,7 @@ class CustomDialog extends StatelessWidget {
                     ),
                     SizedBox(width: 4.w,),
                     GestureDetector(
-                      onTap: () {
-                        print("User Id : $userID");
-                        storeTextInFirestore(text: controller.text.trim(),userID: userID);
-                        Get.back();
-                      },
+                      onTap: yesTap,
                       child: Container(
                         width: 80,
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -165,7 +139,7 @@ class CustomDialog extends StatelessWidget {
         textController: textController,
         hintText: hintText,
         title: title,
-        showTitle: showTitle, userID:'',
+        showTitle: showTitle,
       ),
     );
   }

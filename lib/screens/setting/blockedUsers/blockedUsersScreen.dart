@@ -9,6 +9,7 @@ import '../../../model/res/constant/app_assets.dart';
 import '../../../model/res/constant/app_utils.dart';
 import '../../../model/res/widgets/app_text.dart.dart';
 import '../../../model/res/widgets/button_widget.dart';
+import '../../../model/res/widgets/cachedImage/cachedImage.dart';
 import '../../../model/user_model/user_model.dart';
 import '../../../provider/stream/streamProvider.dart';
 
@@ -57,7 +58,7 @@ class BlockedUserScreen extends StatelessWidget {
                   itemCount: users.length,
                   itemBuilder: (context, index) {
                     UserModelT user = users[index];
-                    return buildBlockUsers(user);
+                    return buildBlockUsers(context,user);
                   },
                 );
               },
@@ -67,7 +68,7 @@ class BlockedUserScreen extends StatelessWidget {
     );
   }
 
-  Widget buildBlockUsers(UserModelT user) {
+  Widget buildBlockUsers(context,UserModelT user) {
     return Padding(
       padding: const EdgeInsets.all(12.0),
       child: Container(
@@ -82,8 +83,9 @@ class BlockedUserScreen extends StatelessWidget {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundImage: user.profileUrl.isNotEmpty ? NetworkImage(user.profileUrl) :
-                  AssetImage(AppAssets.noProfile),
+                child: CachedShimmerImageWidget(
+                imageUrl: user.profileUrl,
+                ),
                 ),
                 SizedBox(width: 2.w,),
                 Column(
@@ -97,6 +99,7 @@ class BlockedUserScreen extends StatelessWidget {
                 text: 'Unblock',
                 onClicked: () {
                   unBlockUser(currentUser,user.userUid,user.name);
+                  Navigator.pop(context);
                 },
                 width: 20.w,
                 height: 4.h,

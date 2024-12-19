@@ -122,7 +122,6 @@ class _ShowMediaState extends State<ShowMedia> {
           if (byteData != null) {
             final Uint8List filteredImageBytes = byteData.buffer.asUint8List();
 
-            // Log captured bytes length to check if non-null
             log('Captured filtered image bytes length: ${filteredImageBytes.length}');
 
             Provider.of<MediaSelectionProvider>(context, listen: false).setFilteredMediaBytes(filteredImageBytes);
@@ -149,7 +148,6 @@ class _ShowMediaState extends State<ShowMedia> {
     return Scaffold(
       body: Stack(
         children: <Widget>[
-          // Media Display Area wrapped in RepaintBoundary to capture filtered image
           Positioned.fill(
             child: RepaintBoundary(
               key: _globalKey,
@@ -178,12 +176,12 @@ class _ShowMediaState extends State<ShowMedia> {
                 )
                     : mediaProvider.chewieController != null
                     ? Chewie(controller: mediaProvider.chewieController!)
-                    : Column(
+                    : const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     AppTextWidget(text: 'Loading...'),
-                        const CircularProgressIndicator(color: primaryColor),
+                        CircularProgressIndicator(color: primaryColor),
                       ],
                     )
                     : const Center(child: Text('No media selected')),
@@ -196,7 +194,7 @@ class _ShowMediaState extends State<ShowMedia> {
             bottom: 10.h,
             left: 0,
             right: 0,
-            child: filterColorContainer(context),
+            child: filterColorContainer(context,mediaProvider.mediaBytes),
           ),
 
           // "Next" Button Positioned at the Top-Right
@@ -204,12 +202,12 @@ class _ShowMediaState extends State<ShowMedia> {
             top: 3.h,
             left: 2.w,
             right: 4.w,
-            child: Container(
+            child: SizedBox(
               width: 100.w,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  AppBackButton(),
+                  const AppBackButton(),
                   ButtonWidget(
                     text: "Next",
                     onClicked: () async {
@@ -222,9 +220,6 @@ class _ShowMediaState extends State<ShowMedia> {
                             mediaType: mediaProvider.mediaType!,
                           ),
                         );
-                        log('${mediaProvider.mediaType!} media type ',);
-                        log('filter media is::${mediaProvider.filteredMediaBytes!} ',);
-                        log('${mediaProvider.mediaType!} media type ',);
                       }
                     },
                     width: 20.w,
@@ -241,9 +236,10 @@ class _ShowMediaState extends State<ShowMedia> {
   }
 
   // Filter selector container with each filter thumbnail and label
-  Widget filterColorContainer(BuildContext context) {
+  Widget filterColorContainer(BuildContext context,image) {
     return Container(
       height: 12.h,
+
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: filterList.length,
@@ -256,16 +252,20 @@ class _ShowMediaState extends State<ShowMedia> {
             },
             child: Container(
               margin: EdgeInsets.symmetric(horizontal: 2.w),
+
               width: 20.w,
               child: Column(
                 children: [
                   Expanded(
                     child: ColorFiltered(
                       colorFilter: filterList[index],
-                      child: Image.asset(
+                      child: image != null ?
+                      Image.memory(image)
+                          :
+                      Image.asset(
                         AppAssets.lady,
                         fit: BoxFit.cover,
-                      ),
+                      )
                     ),
                   ),
                   SizedBox(height: 1.h),

@@ -10,10 +10,8 @@ import '../../../model/res/constant/app_icons.dart';
 import '../../../model/res/routes/routes_name.dart';
 import '../../../model/res/widgets/app_text.dart.dart';
 import '../../../model/res/widgets/app_text_field.dart';
-import '../../../model/user_model/user_model.dart';
 import '../../../provider/action/action_provider.dart';
 import '../../../provider/chat/chatProvider.dart';
-import '../../../provider/user_provider/user_provider.dart';
 import 'chatListTile.dart';
 
 class ChatListScreen extends StatelessWidget {
@@ -111,8 +109,7 @@ class ChatListScreen extends StatelessWidget {
                   final chats = snapshot.data ?? [];
                   final filteredChats = _searchController.text.isEmpty
                     ? chats
-                    : chats.where((chat) =>
-                        chat.lastMessage.toLowerCase().contains(_searchController.text.toLowerCase())).toList();
+                    : chats.where((chat) => chat.lastMessage.toLowerCase().contains(_searchController.text.toLowerCase())).toList();
 
                   return ListView.builder(
                     shrinkWrap: true,

@@ -25,18 +25,18 @@ class GroupListScreen extends StatelessWidget {
       stream: StreamDataProvider().getAllGroupsStream(userID), // Pass the current user UID
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(child: Text('No groups available.'));
+          return const Center(child: Text('No groups available.'));
         }
 
         final groups = snapshot.data!;
 
-        return ListView.builder(
+        return ListView.separated(
           itemCount: groups.length,
           itemBuilder: (context, index) {
             final group = groups[index];
@@ -78,11 +78,20 @@ class GroupListScreen extends StatelessWidget {
                         groupName: group.groupName,
                         groupImage: group.groupImage,
                         groupID: group.groupId,
-                      ));
+                        admin: group.admin,
+                      ),
+                  );
                 },
               ),
             );
           },
+          separatorBuilder: (BuildContext context, int index) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14.0),
+              child: Divider(color: primaryColor.withOpacity(0.4),),
+            );
+
+        },
         );
       },
     );

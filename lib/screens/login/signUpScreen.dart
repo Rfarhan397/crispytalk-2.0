@@ -89,6 +89,12 @@ class SignUpScreen extends StatelessWidget {
                   } else if (value.length < 6) {
                     return 'Password must be at least 6 characters';
                   }
+                  else if (!value.contains(RegExp(r'[A-Z]')) ||
+                      !value.contains(RegExp(r'[a-z]')) ||
+                      !value.contains(RegExp(r'[0-9]')) ||
+                      !value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+                    return 'It contain uppercase,lowercase,number and special character';
+                  }
                   return null;
                 },
               ),
@@ -104,6 +110,7 @@ class SignUpScreen extends StatelessWidget {
                   } else if (value != passwordController.text) {
                     return 'Passwords do not match';
                   }
+
                   return null;
                 },
               ),
@@ -223,6 +230,9 @@ class SignUpScreen extends StatelessWidget {
         'userStatus': "true",
         'blockStatus' : 'active',
         'isOnline' : false,
+        'instagram' : '',
+        'facebook' : '',
+        'phone': '',
       });
 
       ActionProvider.stopLoading();

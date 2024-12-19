@@ -103,7 +103,9 @@ class FollowingScreen extends StatelessWidget {
                       ),
                       title: AppTextWidget(text:user.name.toString(),fontSize: 16,textAlign: TextAlign.start,fontWeight: FontWeight.w500,),
                       subtitle: AppTextWidget(text: '${user.followers.length} Followers',fontSize: 12,textAlign: TextAlign.start,fontWeight: FontWeight.w300,),
-                      trailing: GestureDetector(
+                      trailing:
+                      userId == provider.currentUser?.userUid ?
+                      GestureDetector(
                         onTap: () {
                           action.unFollowUser(currentUser, user.userUid);
                           provider.fetchCurrentUserDetails();
@@ -124,7 +126,7 @@ class FollowingScreen extends StatelessWidget {
                             ),),
                           ),
                         ),
-                      ));
+                      ):null  );
                 });  
             },
             

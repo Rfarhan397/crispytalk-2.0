@@ -12,7 +12,12 @@
           "package_name": "com.example.crispy"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "215147012889-f16mo24qdip6js4clf3uk6ohds0j8ldc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAmiRyDiYZ9zWWaGjF4KXrdnmpMbF4S9Wo"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "215147012889-f16mo24qdip6js4clf3uk6ohds0j8ldc.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "215147012889-lfpdi50s1nf281aqjt0inj4pnsoebmjr.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.crispy"
+              }
+            }
+          ]
         }
       }
     }

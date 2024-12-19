@@ -7,6 +7,7 @@ import 'package:crispy/model/res/components/app_back_button.dart';
 import 'package:crispy/model/res/widgets/app_text.dart.dart';
 import 'package:crispy/model/res/widgets/app_text_field.dart';
 import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
+import 'package:crispy/model/res/widgets/hover_button_loader.dart';
 import 'package:crispy/provider/action/action_provider.dart';
 import 'package:crispy/provider/cloudinary/cloudinary_provider.dart';
 import 'package:crispy/screens/chat/Groups/editGroupDetails/editGroupDetails.dart';
@@ -27,11 +28,11 @@ import '../../../../provider/profile/profileProvider.dart';
 import '../../chatListScreen/groupChat.dart';
 
 class EditNameAndPhoto extends StatelessWidget {
-  final String groupName, groupPhoto,groupID;
+  final String groupName, groupPhoto,groupID,admin;
   final TextEditingController nameController = TextEditingController();
 
   EditNameAndPhoto(
-      {super.key, required this.groupName, required this.groupPhoto, required this.groupID}) {
+      {super.key, required this.groupName, required this.groupPhoto, required this.groupID, required this.admin}) {
     nameController.text =
         groupName; // Initialize controller with current group name
   }
@@ -42,7 +43,7 @@ class EditNameAndPhoto extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         leading:  AppBackButton(onTap: () {
-          Get.to(MainScreen());
+          Get.to(GroupChatScreen(groupName: groupName, groupImage: groupPhoto, groupID: groupID));
         },),
         title: const AppTextWidget(
           fontWeight: FontWeight.w500,
@@ -85,7 +86,7 @@ class EditNameAndPhoto extends StatelessWidget {
                       onTap: () {
                         _showImagePicker(context, profile);
                       },
-                      child: AppTextWidget(
+                      child: const AppTextWidget(
                         text: 'Add Photo',
                         fontSize: 18,
                         color: primaryColor,
@@ -103,16 +104,19 @@ class EditNameAndPhoto extends StatelessWidget {
             SizedBox(
               height: 5.h,
             ),
-            AppButtonWidget(
-                alignment: Alignment.center,
-                text: 'Done',
-                onPressed: () async{
-              _updateProfile(context, profile,groupID);
-                },
-                radius: 4,
-                width: 30.w,
-                height:4.h,
-                fontWeight:FontWeight.w500)
+            Align(
+              alignment: Alignment.center,
+              child: HoverLoadingButton(
+                  text: 'Done',
+                  oneColor: true,
+                  onClicked: () async{
+                _updateProfile(context, profile,groupID);
+                  },
+                  radius: 4,
+                  width: 30.w,
+                  height:4.h,
+                  fontWeight:FontWeight.w500),
+            )
           ],
         ),
       ),
@@ -188,7 +192,11 @@ class EditNameAndPhoto extends StatelessWidget {
       if (updateData.isNotEmpty) {
         await groupRef.update(updateData);
         AppUtils().showToast(text: 'Group updated successfully');
-        Get.back();
+        Get.off(() => GroupChatScreen(
+          groupName: updateData['groupName'] ?? groupName,
+          groupImage: updateData['groupImage'] ?? groupPhoto,
+          groupID: groupID,
+        ));
       }
       ActionProvider.stopLoading();
 

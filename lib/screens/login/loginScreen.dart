@@ -45,12 +45,6 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
-      // appBar: AppBar(
-      //   backgroundColor: Colors.transparent,
-      //   surfaceTintColor: Colors.white,
-      //   shadowColor: Colors.transparent,
-      //   leading: const AppBackButton(),
-      // ),
       body: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 4.w),
@@ -219,7 +213,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _signInWithGoogle() async {
     await googleSignIn.signOut();
     try {
-      // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       final GoogleSignInAuthentication googleAuth = await googleUser!.authentication;
 
@@ -236,9 +229,10 @@ class _LoginScreenState extends State<LoginScreen> {
           'email': userCredential.user!.email,
           'name': userCredential.user!.displayName,
           'profileUrl': userCredential.user!.photoURL,
+          'phone': userCredential.user!.phoneNumber,
           'userType': 'google',
           'password': '',
-          'userUid': currentUser,
+          'userUid': userCredential.user!.uid,
           'createdAt': timestampId,
           'bgUrl' : '',
           'bio' : '',
@@ -250,6 +244,8 @@ class _LoginScreenState extends State<LoginScreen> {
           'userStatus' : "true",
           'blockStatus' : 'active',
           'isOnline' : false,
+          'instagram' : '',
+          'facebook' : '',
 
 
         });

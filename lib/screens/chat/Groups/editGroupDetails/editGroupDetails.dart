@@ -3,6 +3,7 @@ import 'package:crispy/main.dart';
 import 'package:crispy/model/res/components/app_back_button.dart';
 import 'package:crispy/model/res/widgets/app_text.dart.dart';
 import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
+import 'package:crispy/model/res/widgets/customDialog.dart';
 import 'package:crispy/provider/current_user/current_user_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -48,33 +49,34 @@ class _EditGroupDetailsScreenState extends State<EditGroupDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     var user = Get.arguments;
-    final currentUser =
-        Provider.of<CurrentUserProvider>(context, listen: false).currentUser;
+    final currentUser = Provider.of<CurrentUserProvider>(context, listen: false).currentUser;
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         leading: const AppBackButton(),
         actions: [
-          GestureDetector(
-            onTap: () {
-              Get.to(EditNameAndPhoto(
-                groupName: user['groupName'],
-                groupPhoto: user['groupImage'],
-                groupID: user['groupID'],
-              ));
-            },
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12.0),
-              child: AppTextWidget(
-                text: 'Edit',
-                color: primaryColor,
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                textDecoration: TextDecoration.underline,
-                underlinecolor: primaryColor,
-              ),
-            ),
+          if (currentUser?.userUid == user['admin'])
+            GestureDetector(
+              onTap: () {
+                Get.to(EditNameAndPhoto(
+                  groupName: user['groupName'],
+                  groupPhoto: user['groupImage'],
+                  groupID: user['groupID'],
+                  admin: user['admin'],
+                ));
+              },
+              child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12.0),
+                      child: AppTextWidget(
+                        text: 'Edit',
+                        color: primaryColor,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        textDecoration: TextDecoration.underline,
+                        underlinecolor: primaryColor,
+                      ),
+                    )
           ),
         ],
       ),
@@ -100,6 +102,7 @@ class _EditGroupDetailsScreenState extends State<EditGroupDetailsScreen> {
                   AppTextWidget(
                     text: user['groupName'],
                     fontSize: 16,
+                    fontWeight: FontWeight.w500,
                   ),
                 ],
               ),
@@ -112,7 +115,10 @@ class _EditGroupDetailsScreenState extends State<EditGroupDetailsScreen> {
             ),
             Expanded(
               child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                      color: primaryColor,
+                    ))
                   : Column(
                       children: [
                         SizedBox(
@@ -126,137 +132,161 @@ class _EditGroupDetailsScreenState extends State<EditGroupDetailsScreen> {
                                 fontSize: 18,
                                 color: primaryColor,
                               ),
-                              IconButton(
-                                onPressed: () => showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  backgroundColor: Colors.transparent,
-                                  builder: (context) => Container(
-                                    height: MediaQuery.of(context).size.height *
-                                        0.75,
-                                    padding: const EdgeInsets.all(20),
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.vertical(
-                                          top: Radius.circular(20)),
-                                    ),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const AppTextWidget(
-                                          text: 'Add Members',
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        const SizedBox(height: 20),
-                                        StreamBuilder<List<UserModelT>>(
-                                          stream: StreamDataProvider()
-                                              .getFollowingUsers(FirebaseAuth
-                                                  .instance.currentUser!.uid),
-                                          builder: (context, snapshot) {
-                                            if (snapshot.connectionState ==
-                                                ConnectionState.waiting) {
-                                              return const Center(
-                                                  child:
-                                                      CircularProgressIndicator());
-                                            } else if (snapshot.hasError) {
-                                              return Center(
-                                                child: AppTextWidget(
-                                                  text:
-                                                      'Error: ${snapshot.error}',
-                                                  fontSize: 16,
-                                                ),
-                                              );
-                                            } else if (!snapshot.hasData ||
-                                                snapshot.data!.isEmpty) {
-                                              return const Center(
-                                                child: AppTextWidget(
-                                                  text: 'No Friends found',
-                                                  fontSize: 16,
-                                                ),
-                                              );
-                                            }
+                              if (currentUser?.userUid == user['admin'])
+                                IconButton(
+                                      onPressed: () => showModalBottomSheet(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (context) => Container(
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              0.75,
+                                          padding: const EdgeInsets.all(20),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.vertical(
+                                                top: Radius.circular(20)),
+                                          ),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const AppTextWidget(
+                                                text: 'Add Members',
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              const SizedBox(height: 20),
+                                              StreamBuilder<List<UserModelT>>(
+                                                stream: StreamDataProvider()
+                                                    .getFollowingUsers(
+                                                        FirebaseAuth.instance
+                                                            .currentUser!.uid),
+                                                builder: (context, snapshot) {
+                                                  if (snapshot
+                                                          .connectionState ==
+                                                      ConnectionState.waiting) {
+                                                    return const Center(
+                                                        child:
+                                                            CircularProgressIndicator());
+                                                  } else if (snapshot
+                                                      .hasError) {
+                                                    return Center(
+                                                      child: AppTextWidget(
+                                                        text:
+                                                            'Error: ${snapshot.error}',
+                                                        fontSize: 16,
+                                                      ),
+                                                    );
+                                                  } else if (!snapshot
+                                                          .hasData ||
+                                                      snapshot.data!.isEmpty) {
+                                                    return const Center(
+                                                      child: AppTextWidget(
+                                                        text:
+                                                            'No Friends found',
+                                                        fontSize: 16,
+                                                      ),
+                                                    );
+                                                  }
 
-                                            List<UserModelT> users =
-                                                snapshot.data!;
-                                            // Filter out users who are already members
-                                            users = users
-                                                .where((u) => !membersList.any(
-                                                    (m) =>
-                                                        m.userUid == u.userUid))
-                                                .toList();
+                                                  List<UserModelT> users =
+                                                      snapshot.data!;
+                                                  // Filter out users who are already members
+                                                  users = users
+                                                      .where((u) => !membersList
+                                                          .any((m) =>
+                                                              m.userUid ==
+                                                              u.userUid))
+                                                      .toList();
 
-                                            if (users.isEmpty) {
-                                              return const Center(
-                                                child: AppTextWidget(
-                                                  text:
-                                                      'All friends are already in group',
-                                                  fontSize: 16,
-                                                ),
-                                              );
-                                            }
+                                                  if (users.isEmpty) {
+                                                    return const Center(
+                                                      child: AppTextWidget(
+                                                        text:
+                                                            'All friends are already in group',
+                                                        fontSize: 16,
+                                                      ),
+                                                    );
+                                                  }
 
-                                            return Expanded(
-                                              child: ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount: users.length,
-                                                itemBuilder: (context, index) {
-                                                  UserModelT dUser =
-                                                      users[index];
-                                                  return Padding(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        vertical: 4.0),
-                                                    child: ListTile(
-                                                      leading: CircleAvatar(
-                                                        radius: 25,
-                                                       child: CachedShimmerImageWidget(imageUrl: dUser
-                                                           .profileUrl),
-                                                      ),
-                                                      title: AppTextWidget(
-                                                        text: dUser.name
-                                                            .toString(),
-                                                        fontSize: 16.sp,
-                                                        textAlign:
-                                                            TextAlign.start,
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                      ),
-                                                      subtitle: AppTextWidget(
-                                                        text: dUser.bio.isEmpty
-                                                            ? "User bio here"
-                                                            : dUser.bio,
-                                                        fontSize: 12.sp,
-                                                        textAlign:
-                                                            TextAlign.start,
-                                                        fontWeight:
-                                                            FontWeight.w300,
-                                                      ),
-                                                      trailing: IconButton(
-                                                        icon: const Icon(
-                                                            Icons
-                                                                .add_circle_outline,
-                                                            color:
-                                                                primaryColor),
-                                                        onPressed: () =>
-                                                            _addMemberToGroup(
-                                                                user['groupID'],
-                                                                dUser.userUid!),
-                                                      ),
+                                                  return Expanded(
+                                                    child: ListView.builder(
+                                                      shrinkWrap: true,
+                                                      itemCount: users.length,
+                                                      itemBuilder:
+                                                          (context, index) {
+                                                        UserModelT dUser =
+                                                            users[index];
+                                                        return Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  vertical:
+                                                                      4.0),
+                                                          child: ListTile(
+                                                            leading:
+                                                                CircleAvatar(
+                                                              radius: 25,
+                                                              child: CachedShimmerImageWidget(
+                                                                  imageUrl: dUser
+                                                                      .profileUrl),
+                                                            ),
+                                                            title:
+                                                                AppTextWidget(
+                                                              text: dUser.name
+                                                                  .toString(),
+                                                              fontSize: 16.sp,
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .start,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w500,
+                                                            ),
+                                                            subtitle:
+                                                                AppTextWidget(
+                                                              text: dUser.bio
+                                                                      .isEmpty
+                                                                  ? "User bio here"
+                                                                  : dUser.bio,
+                                                              fontSize: 12.sp,
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .start,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w300,
+                                                            ),
+                                                            trailing:
+                                                                IconButton(
+                                                              icon: const Icon(
+                                                                  Icons
+                                                                      .add_circle_outline,
+                                                                  color:
+                                                                      primaryColor),
+                                                              onPressed: () =>
+                                                                  _addMemberToGroup(
+                                                                      user[
+                                                                          'groupID'],
+                                                                      dUser
+                                                                          .userUid!),
+                                                            ),
+                                                          ),
+                                                        );
+                                                      },
                                                     ),
                                                   );
                                                 },
-                                              ),
-                                            );
-                                          },
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                icon: Icon(Icons.group_add_outlined,
-                                    color: primaryColor, size: 28),
-                              )
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      icon: const Icon(Icons.group_add_outlined,
+                                          color: primaryColor, size: 28),
+                                    )
                             ],
                           ),
                         ),
@@ -290,34 +320,27 @@ class _EditGroupDetailsScreenState extends State<EditGroupDetailsScreen> {
                                       textAlign: TextAlign.start,
                                     ),
                                   ),
-                                  if (currentUser?.userUid != member.userUid)
+                                  if (currentUser?.userUid != member.userUid &&  currentUser?.userUid == user['admin'])
                                     IconButton(
                                       icon: const Icon(
                                           Icons.remove_circle_outline,
                                           color: Colors.red),
                                       onPressed: () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (context) => AlertDialog(
-                                            title: const Text('Remove Member'),
-                                            content: Text(
-                                                'Are you sure you want to remove ${member.name}?'),
-                                            actions: [
-                                              TextButton(
-                                                child: const Text('Cancel'),
-                                                onPressed: () =>
-                                                    Navigator.pop(context),
-                                              ),
-                                              TextButton(
-                                                child: const Text('Remove'),
-                                                onPressed: () {
-                                                  Navigator.pop(context);
-                                                  _removeMember(user['groupID'],
-                                                      member.userUid!, context);
-                                                },
-                                              ),
-                                            ],
-                                          ),
+                                        MyCustomDialog.show(
+                                          showTitle: true,
+                                          title: 'Remove Member',
+                                          yes: 'Remove',
+                                          cancel: 'Cancel',
+                                          hintText:
+                                              'Are you sure you want to remove ${member.name}?',
+                                          cancelTap: () {
+                                            Navigator.pop(context);
+                                          },
+                                          yesTap: () {
+                                            Navigator.pop(context);
+                                            _removeMember(user['groupID'],
+                                                member.userUid!, context);
+                                          },
                                         );
                                       },
                                     ),

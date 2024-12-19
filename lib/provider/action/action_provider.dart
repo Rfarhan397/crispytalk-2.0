@@ -20,8 +20,8 @@ import '../../model/res/constant/app_utils.dart';
 import '../../model/res/routes/routes_name.dart';
 import '../../model/services/enum/toastType.dart';
 import '../chat/chatProvider.dart';
-import '../current_user/current_user_provider.dart';
 import '../mediaSelection/mediaSelectionProvider.dart';
+import '../savedPost/savedPostProvider.dart';
 
 class ActionProvider extends ChangeNotifier {
   int _selectedIndex = 0;
@@ -254,7 +254,6 @@ class ActionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-////////////to save media post to firestore //////
   Future<void> savePost(String postId) async {
     final userId = auth.currentUser?.uid.toString() ?? "";
 
@@ -264,6 +263,8 @@ class ActionProvider extends ChangeNotifier {
         'saves': FieldValue.arrayUnion([userId]),
         'isSaved': true,
       });
+      await Provider.of<SavedPostsProvider>(Get.context!, listen: false)
+          .refreshSavedPosts(currentUser);
     }
   }
 
@@ -276,6 +277,8 @@ class ActionProvider extends ChangeNotifier {
         'saves': FieldValue.arrayRemove([userId]),
         'isSaved': false,
       });
+      await Provider.of<SavedPostsProvider>(Get.context!, listen: false)
+          .refreshSavedPosts(currentUser);
     }
   }
 
@@ -290,6 +293,7 @@ class ActionProvider extends ChangeNotifier {
     final userId = auth.currentUser?.uid ?? "";
     if (saved.contains(userId)) {
       await unSavePost(postId);
+
     } else {
       await savePost(postId);
     }
@@ -667,7 +671,26 @@ class ActionProvider extends ChangeNotifier {
       AppUtils().showToast(text: 'Error: $e');
     }
   }
+  Future<void> reportUser({
+    String? userID,
+    String? text,
+  }) async {
+    try {
+      final docRef = FirebaseFirestore.instance
+          .collection("reports")
+          .doc();
+      await docRef.set({
+        'text': text,
+        'createdAt': DateTime.now().millisecondsSinceEpoch.toString(),
+        'reportTo':userID,
+        'reportBy':currentUser,
+        'docID':docRef.id
+      });
 
-
-
+      log("Text stored successfully in Firestore.");
+    } catch (e) {
+      log("Failed to store text in Firestore: $e");
+      rethrow;
+    }
+  }
 }

@@ -8,6 +8,8 @@ class AppAssets{
   static const lady  = "assets/images/lady.webp";
   static const boy  = "assets/images/boy.webp";
   static const userBg  = "assets/images/userBg.webp";
+  static const fb  = "assets/images/fb.webp";
+  static const insta  = "assets/images/insta.webp";
   static const noProfile  = "assets/images/noPerson.jpg";
 
 
