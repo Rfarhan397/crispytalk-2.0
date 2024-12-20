@@ -93,12 +93,9 @@ class HoverLoadingButton extends StatelessWidget {
                     ),
                   Center(
                     child: hoverProvider.isLoading(index ?? 0)
-                        ? const Padding(
-                          padding: EdgeInsets.all(10.0),
-                          child: CircularProgressIndicator(
-                                                color: AppColors.appBackgroundColor,
-                                              ),
-                        )
+                        ? const CircularProgressIndicator(
+                                              color: AppColors.appBackgroundColor,
+                                            )
                         : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

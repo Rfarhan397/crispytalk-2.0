@@ -141,6 +141,7 @@ class ChatProvider with ChangeNotifier {
   Stream<List<ChatRoomModel>> getChatRooms() {
     return FirebaseFirestore.instance
         .collection('chats')
+    .orderBy('createdAt',descending: true)
         .snapshots()
         .map((snapshot) {
       _allChats = snapshot.docs.map((doc) => ChatRoomModel.fromMap(doc.data(),doc.id)).toList();

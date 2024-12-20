@@ -21,29 +21,22 @@ import '../../provider/profile/profileProvider.dart';
 import '../../provider/current_user/current_user_provider.dart';
 
 class EditProfile extends StatelessWidget {
-  EditProfile({super.key});
-
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController bioController = TextEditingController();
-  final TextEditingController instaController = TextEditingController();
-  final TextEditingController fbController = TextEditingController();
+  const EditProfile({super.key});
 
   @override
   Widget build(BuildContext context) {
     final profileProvider = Provider.of<ProfileProvider>(context, listen: true);
     final currentUserProvider = Provider.of<CurrentUserProvider>(context);
     final userData = currentUserProvider.currentUser;
-    Color greyColor = const Color(0xffD9D9D9);
 
-    // Initialize controllers with current user data
     if (userData != null) {
-      nameController.text = userData.name;
-      bioController.text = userData.bio ?? '';
-      instaController.text = userData.instagram ?? '';
-      fbController.text = userData.facebook ?? '';
-      if (userData.gender != null && userData.gender!.isNotEmpty) {
-        profileProvider.setGender(userData.gender!);
-      }
+      profileProvider.initializeControllers({
+        'name': userData.name,
+        'bio': userData.bio,
+        'instagram': userData.instagram,
+        'facebook': userData.facebook,
+        'gender': userData.gender,
+      });
     }
 
     return Scaffold(
@@ -64,7 +57,7 @@ class EditProfile extends StatelessWidget {
                   height: 60.w,
                   width: 100.w,
                   decoration: BoxDecoration(
-                    color: greyColor,
+                    color: customGrey,
                     borderRadius: const BorderRadius.only(
                       bottomRight: Radius.circular(20),
                       bottomLeft: Radius.circular(20),
@@ -123,7 +116,7 @@ class EditProfile extends StatelessWidget {
                             width: 100,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(50),
-                              color: greyColor,
+                              color: customGrey,
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(50),
@@ -175,7 +168,7 @@ class EditProfile extends StatelessWidget {
                     height: 40,
                     width: 60.w,
                     child: AppTextField(
-                      controller: nameController,
+                      controller: profileProvider.nameController,
                       radius: 8,
                       hintText: "Enter Name",
                     ),
@@ -185,12 +178,12 @@ class EditProfile extends StatelessWidget {
             ),
 
             // Bio Field
-            buildUserInfo("Bio:", "Edit your bio", 11.w, bioController),
+            buildUserInfo("Bio:", "Edit your bio", 11.w, context),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 6.w),
               child: Row(
                 children: [
-                  AppTextWidget(
+                  const AppTextWidget(
                     text: 'Gender:',
                     fontWeight: FontWeight.w600,
                     color: Colors.black,
@@ -208,7 +201,7 @@ class EditProfile extends StatelessWidget {
                           }
                         },
                       ),
-                      Text('Male'),
+                      const Text('Male'),
                     ],
                   ),
                   Row(
@@ -223,7 +216,7 @@ class EditProfile extends StatelessWidget {
                           }
                         },
                       ),
-                      Text('Female'),
+                      const Text('Female'),
                     ],
                   ),
                 ],
@@ -248,8 +241,8 @@ class EditProfile extends StatelessWidget {
                     ),
                   ),
                 ),
-                buildUserInfo("Instagram:", "Add Link", 3.w, instaController),
-                buildUserInfo("Facebook:", "Add Link", 4.w, fbController),
+                buildUserInfo("Instagram:", "Add Link", 3.w, context),
+                buildUserInfo("Facebook:", "Add Link", 4.w, context),
               ],
             ),
 
@@ -277,7 +270,8 @@ class EditProfile extends StatelessWidget {
     );
   }
 
-  Padding buildUserInfo(String name, String hint, double width, TextEditingController controller) {
+  Padding buildUserInfo(String name, String hint, double width, BuildContext context) {
+    final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.h),
       child: Row(
@@ -294,7 +288,7 @@ class EditProfile extends StatelessWidget {
             height: 40,
             width: 60.w,
             child: AppTextField(
-              controller: controller,
+              controller: getControllerByName(name, profileProvider),
               radius: 8,
               hintText: hint,
             ),
@@ -302,6 +296,19 @@ class EditProfile extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  TextEditingController getControllerByName(String name, ProfileProvider provider) {
+    switch (name) {
+      case "Bio:":
+        return provider.bioController;
+      case "Instagram:":
+        return provider.instaController;
+      case "Facebook:":
+        return provider.fbController;
+      default:
+        return provider.nameController;
+    }
   }
 
   void _showImagePicker(BuildContext context, VoidCallback pickFromGallery, VoidCallback pickFromCamera) {
@@ -357,35 +364,34 @@ class EditProfile extends StatelessWidget {
         updateData['bgUrl'] = profile.imageUrl;
       }
 
-      if (nameController.text.trim().isNotEmpty) {
-        updateData['name'] = nameController.text.trim();
+      if (profile.nameController.text.trim().isNotEmpty) {
+        updateData['name'] = profile.nameController.text.trim();
       }
 
-      if (bioController.text.trim().isNotEmpty) {
-        updateData['bio'] = bioController.text.trim();
+      if (profile.bioController.text.trim().isNotEmpty) {
+        updateData['bio'] = profile.bioController.text.trim();
       }
 
-      if (instaController.text.trim().isNotEmpty) {
-        updateData['instagram'] = instaController.text.trim();
+      if (profile.instaController.text.trim().isNotEmpty) {
+        updateData['instagram'] = profile.instaController.text.trim();
       }
 
-      if (fbController.text.trim().isNotEmpty) {
-        updateData['facebook'] = fbController.text.trim();
+      if (profile.fbController.text.trim().isNotEmpty) {
+        updateData['facebook'] = profile.fbController.text.trim();
       }
 
-      if (profile.selectedGender.isNotEmpty) {
-        updateData['gender'] = profile.selectedGender;
-      }
+      // Always include gender in updateData
+      updateData['gender'] = profile.selectedGender;
 
       if (updateData.isNotEmpty) {
         await FirebaseFirestore.instance.collection('users').doc(currentUser).update(updateData);
         await currentUserProvider.fetchCurrentUserDetails(); // Refresh user data
         AppUtils().showToast(text: 'Profile updated successfully!');
         profile.clear();
-        nameController.clear();
-        bioController.clear();
-        instaController.clear();
-        fbController.clear();
+        profile.nameController.clear();
+        profile.bioController.clear();
+        profile.instaController.clear();
+        profile.fbController.clear();
         Get.back(); // Navigate back to profile screen
       } else {
         AppUtils().showToast(text: 'No changes detected.');

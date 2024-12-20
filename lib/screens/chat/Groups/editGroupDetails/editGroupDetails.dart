@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:crispy/constant.dart';
 import 'package:crispy/main.dart';
 import 'package:crispy/model/res/components/app_back_button.dart';
@@ -12,12 +14,9 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-import '../../../../model/res/constant/app_assets.dart';
 import '../../../../model/user_model/user_model.dart';
 import '../../../../provider/stream/streamProvider.dart';
 import '../../../../model/res/constant/app_utils.dart';
-import '../../createGroup/createGroup.dart';
 import 'editNameAndPhoto.dart';
 
 class EditGroupDetailsScreen extends StatefulWidget {
@@ -43,20 +42,30 @@ class _EditGroupDetailsScreenState extends State<EditGroupDetailsScreen> {
     setState(() {
       membersList = members;
       isLoading = false;
-    });
+    },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     var user = Get.arguments;
-    final currentUser = Provider.of<CurrentUserProvider>(context, listen: false).currentUser;
+    // Listen to changes in currentUser
+    final currentUser = Provider.of<CurrentUserProvider>(context).currentUser;
+    
+    // Debug prints to check values
+    log('Current User ID: ${currentUser?.userUid}');
+    log('Admin ID: ${user['admin']}');
+    log('Is Admin Check: ${currentUser?.userUid == user['admin']}');
+    log('User arguments: $user'); // Add this to check full user data
+
+    bool isAdmin = currentUser?.userUid == user['admin'];
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         leading: const AppBackButton(),
         actions: [
-          if (currentUser?.userUid == user['admin'])
+          if (isAdmin) // Using the bool variable for clarity
             GestureDetector(
               onTap: () {
                 Get.to(EditNameAndPhoto(
@@ -64,7 +73,8 @@ class _EditGroupDetailsScreenState extends State<EditGroupDetailsScreen> {
                   groupPhoto: user['groupImage'],
                   groupID: user['groupID'],
                   admin: user['admin'],
-                ));
+                ),);
+
               },
               child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12.0),
@@ -132,7 +142,7 @@ class _EditGroupDetailsScreenState extends State<EditGroupDetailsScreen> {
                                 fontSize: 18,
                                 color: primaryColor,
                               ),
-                              if (currentUser?.userUid == user['admin'])
+                              if (isAdmin) // Using the bool variable for clarity
                                 IconButton(
                                       onPressed: () => showModalBottomSheet(
                                         context: context,
@@ -320,7 +330,7 @@ class _EditGroupDetailsScreenState extends State<EditGroupDetailsScreen> {
                                       textAlign: TextAlign.start,
                                     ),
                                   ),
-                                  if (currentUser?.userUid != member.userUid &&  currentUser?.userUid == user['admin'])
+                                  if (currentUser?.userUid != member.userUid && isAdmin) // Using the bool variable for clarity
                                     IconButton(
                                       icon: const Icon(
                                           Icons.remove_circle_outline,

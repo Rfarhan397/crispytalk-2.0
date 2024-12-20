@@ -26,63 +26,64 @@ class ShowMedia extends StatefulWidget {
 
 class _ShowMediaState extends State<ShowMedia> {
   final GlobalKey _globalKey = GlobalKey(); // Key to capture filtered image
-
-  List<ColorFilter> filterList = [
-    const ColorFilter.matrix([
+  
+  // Move filter lists to static const to avoid recreating on each build
+  static const List<ColorFilter> filterList = [
+    ColorFilter.matrix([
       0.393, 0.769, 0.189, 0, 0,
       0.349, 0.686, 0.168, 0, 0,
       0.272, 0.534, 0.131, 0, 0,
       0, 0, 0, 1, 0,
     ]),
-    const ColorFilter.matrix([
+    ColorFilter.matrix([
       0.2126, 0.7152, 0.0722, 0, 0,
       0.2126, 0.7152, 0.0722, 0, 0,
       0.2126, 0.7152, 0.0722, 0, 0,
       0, 0, 0, 1, 0,
     ]),
-    const ColorFilter.matrix([
+    ColorFilter.matrix([
       1.2, 0, 0, 0, 0,
       0, 1.0, 0, 0, 0,
       0, 0, 0.8, 0, 0,
       0, 0, 0, 1, 0,
     ]),
-    const ColorFilter.matrix([
+    ColorFilter.matrix([
       0.8, 0, 0, 0, 0,
       0, 0.8, 0, 0, 0,
       0, 0, 1.2, 0, 0,
       0, 0, 0, 1, 0,
     ]),
-    const ColorFilter.matrix([
+    ColorFilter.matrix([
       0.5, 0, 0, 0, 0,
       0, 0.5, 0, 0, 0,
       0, 0, 0.5, 0, 0,
       0, 0, 0, 1, 0,
     ]),
-    const ColorFilter.matrix([
+    ColorFilter.matrix([
       1.5, 0, 0, 0, 0,
       0, 1.5, 0, 0, 0,
       0, 0, 1.5, 0, 0,
       0, 0, 0, 1, 0,
     ]),
-    const ColorFilter.matrix([
+    ColorFilter.matrix([
       1.5, 0, 0, 0, -0.5,
       0, 1.5, 0, 0, -0.5,
       0, 0, 1.5, 0, -0.5,
       0, 0, 0, 1, 0,
     ]),
-    const ColorFilter.matrix([
+    ColorFilter.matrix([
       1.0, 0.1, 0.1, 0, 0,
       0.1, 1.0, 0.1, 0, 0,
       0.1, 0.1, 0.8, 0, 0,
       0, 0, 0, 1, 0,
     ]),
-    const ColorFilter.matrix([
+    ColorFilter.matrix([
       0.299, 0.587, 0.114, 0, 0,
       0.299, 0.587, 0.114, 0, 0,
       0.299, 0.587, 0.114, 0, 0,
       0, 0, 0, 1, 0,
     ]),
-    const ColorFilter.matrix([
+    ColorFilter.matrix([
       0.8, 0.2, 0.2, 0, 0,
       0.2, 0.8, 0.2, 0, 0,
       0.2, 0.2, 0.8, 0, 0,
@@ -90,9 +91,9 @@ class _ShowMediaState extends State<ShowMedia> {
     ]),
   ];
 
-  List<String> filterNames = [
+  static const List<String> filterNames = [
     "Sepia",
-    "B&W",
+    "B&W", 
     "Warm",
     "Cool",
     "Dimmed",
@@ -105,36 +106,41 @@ class _ShowMediaState extends State<ShowMedia> {
 
   int? _selectedFilterIndex;
 
+  @override
+  void dispose() {
+    final mediaProvider = Provider.of<MediaSelectionProvider>(context, listen: false);
+    if(mediaProvider.chewieController != null) {
+      mediaProvider.chewieController!.pause();
+    }
+    super.dispose();
+  }
+
   Future<void> _captureFilteredImage() async {
     try {
-      final mediaType = Provider.of<MediaSelectionProvider>(context, listen: false).mediaType;
+      final mediaProvider = Provider.of<MediaSelectionProvider>(context, listen: false);
+      final mediaType = mediaProvider.mediaType;
 
       if (mediaType == 'jpg' || mediaType == 'png') {
         // Ensure the frame is fully rendered before capturing
         await Future.delayed(const Duration(milliseconds: 100));
 
-        final RenderRepaintBoundary boundary = _globalKey.currentContext?.findRenderObject() as RenderRepaintBoundary;
+        final RenderRepaintBoundary? boundary = _globalKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
 
         if (boundary != null) {
-          ui.Image image = await boundary.toImage(pixelRatio: 2.0);
-          ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+          final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+          final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
 
           if (byteData != null) {
             final Uint8List filteredImageBytes = byteData.buffer.asUint8List();
-
-            log('Captured filtered image bytes length: ${filteredImageBytes.length}');
-
-            Provider.of<MediaSelectionProvider>(context, listen: false).setFilteredMediaBytes(filteredImageBytes);
-          } else {
-            log("ByteData is null");
+            mediaProvider.setFilteredMediaBytes(filteredImageBytes);
           }
-        } else {
-          log("Boundary is null, could not capture image.");
         }
       } else {
-        // If it’s a video, no filter is applied, use the original media bytes
-        final mediaBytes = Provider.of<MediaSelectionProvider>(context, listen: false).mediaBytes;
-        Provider.of<MediaSelectionProvider>(context, listen: false).setFilteredMediaBytes(mediaBytes!);
+        // For video, pause playback and use original bytes
+        if(mediaProvider.chewieController != null) {
+          mediaProvider.chewieController!.pause();
+        }
+        mediaProvider.setFilteredMediaBytes(mediaProvider.mediaBytes!);
       }
     } catch (e) {
       log("Error capturing filtered image: $e");
@@ -152,126 +158,109 @@ class _ShowMediaState extends State<ShowMedia> {
             child: RepaintBoundary(
               key: _globalKey,
               child: _selectedFilterIndex == null
-                  ? mediaProvider.mediaType != null
-                  ? (mediaProvider.mediaType == 'jpg' || mediaProvider.mediaType == 'png')
-                  ? Image.memory(
-                mediaProvider.mediaBytes!,
-                fit: BoxFit.contain,
-                width: 100.w,
-                height: 100.h,
-              )
-                  : mediaProvider.chewieController != null
-                  ? Chewie(controller: mediaProvider.chewieController!)
-                  : const CircularProgressIndicator(color: primaryColor)
-                  : const Center(child: Text('No media selected'))
+                  ? _buildMediaWidget(mediaProvider)
                   : ColorFiltered(
-                colorFilter: filterList[_selectedFilterIndex!],
-                child: mediaProvider.mediaType != null
-                    ? (mediaProvider.mediaType == 'jpg' || mediaProvider.mediaType == 'png')
-                    ? Image.memory(
-                  mediaProvider.mediaBytes!,
-                  fit: BoxFit.contain,
-                  width: 100.w,
-                  height: 100.h,
-                )
-                    : mediaProvider.chewieController != null
-                    ? Chewie(controller: mediaProvider.chewieController!)
-                    : const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    AppTextWidget(text: 'Loading...'),
-                        CircularProgressIndicator(color: primaryColor),
-                      ],
-                    )
-                    : const Center(child: Text('No media selected')),
-              ),
+                      colorFilter: filterList[_selectedFilterIndex!],
+                      child: _buildMediaWidget(mediaProvider),
+                    ),
             ),
           ),
 
-          // Filter Selection Container (Positioned near bottom)
+          // Filter Selection Container
           Positioned(
             bottom: 10.h,
             left: 0,
             right: 0,
-            child: filterColorContainer(context,mediaProvider.mediaBytes),
+            child: filterColorContainer(context),
           ),
 
-          // "Next" Button Positioned at the Top-Right
+          // Navigation buttons
           Positioned(
             top: 3.h,
             left: 2.w,
             right: 4.w,
-            child: SizedBox(
-              width: 100.w,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const AppBackButton(),
-                  ButtonWidget(
-                    text: "Next",
-                    onClicked: () async {
-                      await _captureFilteredImage();
-                      if (mediaProvider.filteredMediaBytes != null && mediaProvider.mediaType != null) {
-                        Get.toNamed(
-                          RoutesName.uploadMedia,
-                          arguments: MediaWithFilter(
-                            mediaBytes: mediaProvider.filteredMediaBytes! ,
-                            mediaType: mediaProvider.mediaType!,
-                          ),
-                        );
-                      }
-                    },
-                    width: 20.w,
-                    height: 5.h,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ],
-              ),
-            ),
+            child: _buildNavigationButtons(mediaProvider),
           ),
         ],
       ),
     );
   }
 
-  // Filter selector container with each filter thumbnail and label
-  Widget filterColorContainer(BuildContext context,image) {
-    return Container(
-      height: 12.h,
+  Widget _buildMediaWidget(MediaSelectionProvider mediaProvider) {
+    if (mediaProvider.mediaType == null) {
+      return const Center(child: Text('No media selected'));
+    }
 
+    if (mediaProvider.mediaType == 'jpg' || mediaProvider.mediaType == 'png') {
+      return Image.memory(
+        mediaProvider.mediaBytes!,
+        fit: BoxFit.contain,
+        width: 100.w,
+        height: 100.h,
+      );
+    }
+
+    return mediaProvider.chewieController != null
+        ? Chewie(controller: mediaProvider.chewieController!)
+        : const CircularProgressIndicator(color: primaryColor);
+  }
+
+  Widget _buildNavigationButtons(MediaSelectionProvider mediaProvider) {
+    return SizedBox(
+      width: 100.w,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const AppBackButton(),
+          ButtonWidget(
+            text: "Next",
+            onClicked: () async {
+              await _captureFilteredImage();
+              if (mediaProvider.filteredMediaBytes != null && mediaProvider.mediaType != null) {
+                Get.toNamed(
+                  RoutesName.uploadMedia,
+                  arguments: MediaWithFilter(
+                    mediaBytes: mediaProvider.filteredMediaBytes!,
+                    mediaType: mediaProvider.mediaType!,
+                  ),
+                );
+              }
+            },
+            width: 20.w,
+            height: 5.h,
+            fontWeight: FontWeight.w600,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget filterColorContainer(BuildContext context) {
+    return SizedBox(
+      height: 12.h,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: filterList.length,
         itemBuilder: (context, index) {
           return GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedFilterIndex = index;
-              });
-            },
+            onTap: () => setState(() => _selectedFilterIndex = index),
             child: Container(
               margin: EdgeInsets.symmetric(horizontal: 2.w),
-
               width: 20.w,
               child: Column(
                 children: [
                   Expanded(
                     child: ColorFiltered(
                       colorFilter: filterList[index],
-                      child: image != null ?
-                      Image.memory(image)
-                          :
-                      Image.asset(
+                      child: Image.asset(
                         AppAssets.lady,
                         fit: BoxFit.cover,
-                      )
+                      ),
                     ),
                   ),
                   SizedBox(height: 1.h),
                   AppTextWidget(
-                    text:
-                    filterNames[index],
+                    text: filterNames[index],
                     color: _selectedFilterIndex == index ? Colors.blue : Colors.black,
                   ),
                 ],

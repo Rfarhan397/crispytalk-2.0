@@ -12,14 +12,17 @@ class CurrentUserProvider extends ChangeNotifier {
   String? get error => _error;
 
   Future<void> fetchCurrentUserDetails() async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
+    if (_isLoading) return;
+    
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
 
+    try {
       final StreamDataProvider streamProvider = StreamDataProvider();
-      _currentUser = await streamProvider.getCurrentUser();
+      final user = await streamProvider.getCurrentUser();
       
+      _currentUser = user;
       _isLoading = false;
       notifyListeners();
     } catch (e) {

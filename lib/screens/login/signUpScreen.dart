@@ -83,6 +83,7 @@ class SignUpScreen extends StatelessWidget {
                 hintText: 'Password',
                 isObscure: passwordVisibilityProvider.isObscure,
                 toggleVisibility: passwordVisibilityProvider.toggleVisibility,
+                showVisibilityToggle: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your password';
@@ -104,6 +105,7 @@ class SignUpScreen extends StatelessWidget {
                 hintText: 'Confirm Password',
                 isObscure: passwordVisibilityProvider.isObscure,
                 toggleVisibility: passwordVisibilityProvider.toggleVisibility,
+                showVisibilityToggle: false,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please confirm your password';
@@ -179,6 +181,7 @@ class SignUpScreen extends StatelessWidget {
     required String hintText,
     required bool isObscure,
     required VoidCallback toggleVisibility,
+    required bool showVisibilityToggle,
     required String? Function(String?) validator,
   }) {
     return AppTextField(
@@ -190,13 +193,13 @@ class SignUpScreen extends StatelessWidget {
         padding: const EdgeInsets.all(14.0),
         child: SvgPicture.asset(AppAssets.password),
       ),
-      suffixIcon: GestureDetector(
+      suffixIcon: showVisibilityToggle ? GestureDetector(
         onTap: toggleVisibility,
         child: Padding(
           padding: const EdgeInsets.all(18.0),
           child: SvgPicture.asset(isObscure ? AppAssets.eye : AppAssets.eyeOff),
         ),
-      ),
+      ) : null,
       validator: validator,
     );
   }

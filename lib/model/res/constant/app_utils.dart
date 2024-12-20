@@ -5,6 +5,7 @@
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:mailer/mailer.dart';
@@ -16,7 +17,12 @@ import 'package:fluttertoast/fluttertoast.dart';
 import '../routes/routes_name.dart';
 
 class AppUtils{
-
+   setPortrait() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
 
   showToast({String? text, Color? bgColor, Color? txtColor}) {
     Fluttertoast.showToast(
@@ -156,4 +162,5 @@ class AppUtils{
       }
     }
   }
+
 }

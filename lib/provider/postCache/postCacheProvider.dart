@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../../constant.dart';
 import '../../model/mediaPost/mediaPost_model.dart';
@@ -18,6 +19,10 @@ class PostCacheProvider with ChangeNotifier {
 
   void initializePostsStream() {
     _postsSubscription?.cancel();
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
     _postsSubscription = StreamDataProvider()
         .getPostsWithUserDetails(
           audience: 'Everyone',
@@ -26,11 +31,20 @@ class PostCacheProvider with ChangeNotifier {
           includeCurrentUser: false,
         )
         .listen(
-          (posts) => setCachedPosts(posts),
+          (posts) {
+            _cachedPosts = posts;
+            _isLoading = false;
+            _error = null;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              notifyListeners();
+            });
+          },
           onError: (e) {
             _error = e.toString();
             _isLoading = false;
-            notifyListeners();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              notifyListeners();
+            });
           },
         );
   }
@@ -45,7 +59,9 @@ class PostCacheProvider with ChangeNotifier {
     _cachedPosts = posts;
     _isLoading = false;
     _error = null;
-    notifyListeners();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
   }
 
   Future<void> initializePosts() async {

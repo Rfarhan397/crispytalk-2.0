@@ -108,8 +108,8 @@ class ChatListScreen extends StatelessWidget {
                   }
                   final chats = snapshot.data ?? [];
                   final filteredChats = _searchController.text.isEmpty
-                    ? chats
-                    : chats.where((chat) => chat.lastMessage.toLowerCase().contains(_searchController.text.toLowerCase())).toList();
+                      ? chats
+                      : chats.where((chat) => chat.lastMessage.toLowerCase().contains(_searchController.text.toLowerCase())).toList();
 
                   return ListView.builder(
                     shrinkWrap: true,

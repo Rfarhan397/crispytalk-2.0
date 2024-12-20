@@ -1,7 +1,6 @@
 
 import 'package:crispy/model/res/routes/routes_name.dart';
 import 'package:get/get.dart';
-import '../../../screens/MediaSelection/MediaSelectionScreen.dart';
 import '../../../screens/MediaSelection/showMedia.dart';
 import '../../../screens/MediaSelection/uploadMedia.dart';
 import '../../../screens/chat/Groups/editGroupDetails/editGroupDetails.dart';
@@ -17,7 +16,6 @@ import '../../../screens/login/signUpScreen.dart';
 import '../../../screens/mainScreen/homeScreen.dart';
 import '../../../screens/mainScreen/mainScreen.dart';
 import '../../../screens/myProfile/editProfile.dart';
-import '../../../screens/myProfile/otherUserProfile/otherUserProfile.dart';
 import '../../../screens/notifications/notificationScreen.dart';
 import '../../../screens/setting/accounts/accountsScreen.dart';
 import '../../../screens/setting/blockedUsers/blockedUsersScreen.dart';
@@ -54,7 +52,6 @@ class Routes {
     GetPage(name: RoutesName.createGroup, page: () => CreateGroup()),
     // GetPage(name: RoutesName.editGroup, page: () => EditGroupScreen()),
     GetPage(name: RoutesName.editProfile, page: () => EditProfile()),
-    GetPage(name: RoutesName.uploadContentScreen, page: () => MediaUploadScreen()),
     GetPage(name: RoutesName.followerScreen, page: () => FollowersScreen()),
     GetPage(name: RoutesName.followingScreen, page: () => FollowingScreen()),
     GetPage(name: RoutesName.uploadMedia, page: () => UploadMediaScreen(  )),

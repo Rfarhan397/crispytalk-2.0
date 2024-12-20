@@ -100,8 +100,8 @@ class StreamDataProvider extends ChangeNotifier {
                 return data?['userUid'] as String?;
               })
               .whereType<String>()
-              .where((uid) => !blockedUserIds.contains(uid)) // Filter out blocked users
-              .where((uid) => includeCurrentUser || uid != currentUserId) // Handle current user inclusion
+              .where((uid) => !blockedUserIds.contains(uid))
+              .where((uid) => includeCurrentUser || uid != currentUserId)
               .toSet();
 
           if (postUserIds.isEmpty) {

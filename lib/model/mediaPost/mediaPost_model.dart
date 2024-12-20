@@ -36,7 +36,6 @@ class MediaPost {
       isSaved: data['isSaved'] ?? false,
       likes: List<String>.from(data['likes']?? []),
       saves: List<String>.from(data['saves']?? []),
-      // likes: data['likes'] ?? [],
       mediaType: data['mediaType'] ?? '',
       mediaUrl: data['mediaUrl'] ?? '',
       timeStamp: data['timeStamp'] ?? '',

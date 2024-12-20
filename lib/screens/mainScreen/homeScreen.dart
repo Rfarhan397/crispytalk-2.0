@@ -21,6 +21,8 @@ import '../../provider/postCache/postCacheProvider.dart';
 import '../../provider/stream/streamProvider.dart';
 import '../ImageDetail/image_detail.dart';
 import '../myProfile/otherUserProfile/otherUserProfile.dart';
+import '../sampleVideo/fullscreenSample.dart';
+import '../sampleVideo/tiktokVIdeoPlayer.dart';
 import '../video/videoScreen.dart';
 import '../video/videoWidget.dart';
 
@@ -119,10 +121,16 @@ class HomeScreen extends StatelessWidget {
                             mediaUrl: mediaUrl,
                             mediaType: mediaType,
                             onTap: () {
-                              Get.toNamed(
-                                RoutesName.video,
-                                arguments: {'videoUrl': mediaUrl},
-                              );
+                              // Get.toNamed(
+                              //   RoutesName.video,
+                              //   arguments: {'videoUrl': mediaUrl},
+                              // );
+                              Get.to(() => FullScreenVideoPlayer(
+                                videoUrl: mediaUrl,
+                                userName: userName,
+                                profileImage: profileImage.toString(),
+                              ));
+
                             },
                           ),
                         );
@@ -158,11 +166,10 @@ class HomeScreen extends StatelessWidget {
                     return const Center(child: Text('No posts available'));
                   }
                   final posts = snapshot.data ?? [];
-                  log('post data is $posts');
 
                   // Store posts in cache
                   context.read<PostCacheProvider>().setCachedPosts(posts);
-                  
+
                   return buildVerticalPostsList(posts);
                 },
               ),
@@ -210,14 +217,19 @@ class HomeScreen extends StatelessWidget {
                       postData.mediaUrl.endsWith('.png') ||
                       postData.mediaUrl.endsWith('.jpeg');
               final isVideo =
+              // = postData.mediaType == 'mp4';
                   postData.mediaUrl.endsWith('.mp4') ||
                       postData.mediaUrl.endsWith('.mov') ||
                       postData.mediaUrl.endsWith('.avi');
               if (isVideo) {
-                Get.to(VideoScreen(
-                  index: index,
-                  imagePath: postData.userDetails!.profileUrl,
-                  hasBackBtn: true,
+                // Get.to(VideoScreen(
+                //   index: index,
+                //   imagePath: postData.userDetails!.profileUrl,
+                //   hasBackBtn: true,
+                // ));
+                Get.to(VideoFeedScreen(
+                  posts: post,
+                  initialIndex: index,
                 ));
               }
               if (isImage) {
@@ -326,12 +338,7 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      // CircleAvatar(
-                      //   radius: 20,
-                      //   backgroundImage: profileImage.isNotEmpty
-                      //       ? NetworkImage(profileImage)
-                      //       : const AssetImage(AppAssets.noProfile),
-                      // ),
+
                       SizedBox(width: 1.w),
                       Flexible(
                         child: AppTextWidget(

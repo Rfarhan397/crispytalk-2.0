@@ -31,9 +31,9 @@ class FollowingScreen extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         backgroundColor: Colors.white,
         shadowColor: Colors.transparent,
-        leading: AppBackButton(),
+        leading: const AppBackButton(),
         centerTitle: true,
-        title: AppTextWidget(text: 'Following',color: primaryColor,fontWeight: FontWeight.w700,fontSize: 18,),
+        title: const AppTextWidget(text: 'Following',color: primaryColor,fontWeight: FontWeight.w700,fontSize: 18,),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,16 +111,16 @@ class FollowingScreen extends StatelessWidget {
                           provider.fetchCurrentUserDetails();
                         },
                         child: Container(
-                          padding: EdgeInsets.all(5),
+                          padding: const EdgeInsets.all(5),
                           width: 80,
                           height: 30,
                           decoration: BoxDecoration(
                               color:  primaryColor,
                               borderRadius: BorderRadius.circular(8)
                           ),
-                          child: Center(
+                          child: const Center(
                             child: Text( 'Remove',style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: Colors.white,
                             ),),

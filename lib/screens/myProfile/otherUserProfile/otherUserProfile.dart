@@ -1,17 +1,18 @@
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
-import 'package:crispy/screens/ImageDetail/image_detail.dart';
+import 'package:crispy/provider/mediaPost/media_post_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../constant.dart';
-import '../../../model/mediaPost/mediaPost_model.dart';
+import '../../../model/res/components/ProfileActionButton.dart';
 import '../../../model/res/components/app_back_button.dart';
-import '../../../model/res/components/app_button_widget.dart';
+import '../../../model/res/components/mediaWrap.dart';
+import '../../../model/res/components/profileBackGroundImage.dart';
+import '../../../model/res/components/profileImage.dart';
+import '../../../model/res/components/socialLinks.dart';
 import '../../../model/res/constant/app_assets.dart';
 import '../../../model/res/constant/app_colors.dart';
 import '../../../model/res/constant/app_icons.dart';
@@ -21,10 +22,7 @@ import '../../../model/res/widgets/app_text.dart.dart';
 import '../../../model/res/widgets/customDialog.dart';
 import '../../../model/user_model/user_model.dart';
 import '../../../provider/action/action_provider.dart';
-import '../../../provider/chat/chatProvider.dart';
 import '../../../provider/stream/streamProvider.dart';
-import '../../video/mediaViewerScreen.dart';
-import '../userProfile.dart';
 
 class OtherUserProfile extends StatelessWidget {
     OtherUserProfile(
@@ -170,10 +168,11 @@ class UserProfileOtherUser extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        BackgroundImage(profileUrl: userModel.bgUrl),
+        ProfileBackgroundImage(profileUrl: userModel.bgUrl),
         ProfileImage(profileUrl: userModel.profileUrl),
         Transform.translate(
           offset: Offset(0, -8.h),
@@ -182,45 +181,17 @@ class UserProfileOtherUser extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                UserDetails(postData: userModel),
-                FollowAndActionButtons(postData: userModel),
+                UserBioScreen( name: userModel.name,bio: userModel.bio,),
+                FollowAndActionButtons(postData: userModel,),
                 SizedBox(height: 3.w),
                 userModel.facebook != null && userModel.facebook!.isNotEmpty ?
                 Align(
                   alignment: Alignment.center,
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 15.w),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        buildSocialLink(
-                          'Facebook',
-                          AppAssets.fb,
-                          40.0,
-                          40.0,
-                          onTap: () {
-                            if (userModel.facebook != null) {
-                              launchUrl(Uri.parse(userModel.facebook!));
-                            }else {
-                              AppUtils().showToast(text: 'Error');
-                            }
-                          },
-                        ),
-                        buildSocialLink(
-                          'Instagram',
-                          AppAssets.insta,
-                          25.0,
-                          25.0,
-                          onTap: () {
-                            if (userModel.instagram != null) {
-                              launchUrl(Uri.parse(userModel.instagram!));
-                            }else {
-                              AppUtils().showToast(text: 'Error');
-                            }
-                          },
-                        ),
-                      ],
-                    ),
+                    child: SocialLinksScreen(
+                      userModel: userModel,
+                    )
                   ),
                 ):
                 const Align(
@@ -228,9 +199,9 @@ class UserProfileOtherUser extends StatelessWidget {
                   child: AppTextWidget(text: 'No Social Link',),
                 ),
                 SizedBox(height: 3.w),
-                _otherActionButton(userModel),
+                OtherActionButton(userModel),
                 SizedBox(height: 2.h),
-                _MediaWrap(userUid: userModel.userUid),
+                MediaWrap(userUid: userModel.userUid),
               ],
             ),
           ),
@@ -238,27 +209,7 @@ class UserProfileOtherUser extends StatelessWidget {
       ],
     );
   }
-  Widget buildSocialLink(String title, String image,double height,width,
-      {required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Image.asset(image,height: height,width: width,fit: BoxFit.cover,),
 
-          Padding(
-            padding: const EdgeInsets.only(left: 8.0),
-            child: AppTextWidget(
-              text: title,
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
-              maxLines: 2,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class BackgroundImage extends StatelessWidget {
@@ -283,72 +234,12 @@ class BackgroundImage extends StatelessWidget {
   }
 }
 
-class ProfileImage extends StatelessWidget {
-  final String profileUrl;
-  const ProfileImage({super.key, required this.profileUrl});
 
-  @override
-  Widget build(BuildContext context) {
-    return Transform.translate(
-      offset: Offset(0, -10.h),
-      child: Stack(
-        alignment: Alignment.bottomRight,
-        children: [
-          GestureDetector(
-            onTap: () {
-              Get.to(ImageDetailScreen(
-                imageUrl: profileUrl,
-              ));
-            },
-            child: Container(
-              height: 100,
-              width: 100,
-              decoration: BoxDecoration(
-                border: Border.all(color: primaryColor, width: 3),
-                borderRadius: BorderRadius.circular(56),
-              ),
-              child: ClipRRect(
-                  borderRadius: BorderRadius.circular(56),
-                  child: CachedShimmerImageWidget(imageUrl: profileUrl)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
-class UserDetails extends StatelessWidget {
-  final UserModelT postData;
-  const UserDetails({super.key, required this.postData});
 
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          AppTextWidget(
-            textAlign: TextAlign.center,
-            text: postData.name,
-            fontWeight: FontWeight.w600,
-            color: primaryColor,
-            fontSize: 18,
-          ),
-          AppTextWidget(
-            text: postData.bio,
-            fontWeight: FontWeight.w400,
-            color: AppColors.textGrey,
-            fontSize: 12,
-          ),
-          SizedBox(height: 1.h),
-        ],
-      ),
-    );
-  }
-}
 
 class FollowAndActionButtons extends StatelessWidget {
+
   final UserModelT postData;
 
   const FollowAndActionButtons({
@@ -358,6 +249,10 @@ class FollowAndActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final countPr = Provider.of<MediaPostProvider>(context,listen: false);
+    countPr.fetchUserPosts(postData.userUid);
+
+
     return SizedBox(
       height: 60,
       child: Padding(
@@ -371,7 +266,7 @@ class FollowAndActionButtons extends StatelessWidget {
               () => Get.toNamed(
                 RoutesName.followerScreen,
                 arguments: {
-                  'userId': postData.userUid, // Pass the current user's ID
+                  'userId': postData.userUid,
                 },
               ),
             ),
@@ -387,8 +282,8 @@ class FollowAndActionButtons extends StatelessWidget {
             ),
             const VerticalDivider(width: 20, thickness: 1, color: Colors.grey),
             _buildFollowItem(
-              postData.likes.length.toString(),
-              "Likes",
+              countPr.getPostCount(postData.userUid).toString(),
+              "Posts",
               () {},
             ),
           ],
@@ -419,133 +314,4 @@ class FollowAndActionButtons extends StatelessWidget {
   }
 }
 
-class _otherActionButton extends StatelessWidget {
-  final UserModelT postData;
-  const _otherActionButton(this.postData);
 
-  @override
-  Widget build(BuildContext context) {
-    final chat = Provider.of<ChatProvider>(context, listen: false);
-
-    return Consumer<ActionProvider>(
-      builder: (context, value, _) {
-        final isFollowed = postData.followers.contains(currentUser);
-
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AppButtonWidget(
-              radius: 8,
-              onPressed: () =>
-                  value.toggleFolloww(postData.userUid, postData.userUid),
-              text: isFollowed ? "Following" : "Follow",
-            ),
-            const SizedBox(width: 5),
-            AppButtonWidget(
-              radius: 8,
-              onPressed: () => _handleMessagePress(chat, context),
-              text: "Message",
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _handleMessagePress(ChatProvider chat, BuildContext context) {
-    chat.getChatID(
-        friendId: postData.userUid,
-        context: context,
-        name: postData.name,
-        image: postData.profileUrl,
-        fcmToken: postData.fcmToken,
-        status: postData.isOnline);
-  }
-}
-
-class _MediaWrap extends StatelessWidget {
-  final String userUid;
-
-  const _MediaWrap({required this.userUid});
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('posts')
-          .where('userUid', isEqualTo: userUid)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text("No media uploaded yet."));
-        }
-
-        final mediaList = snapshot.data!.docs
-            .map((doc) => MediaPost.fromMap(doc.data() as Map<String, dynamic>))
-            .toList();
-
-        return Wrap(
-          alignment: WrapAlignment.start,
-          spacing: 8,
-          runSpacing: 20,
-          children: mediaList
-              .map((media) => _buildMediaItem(context, media))
-              .toList(),
-        );
-      },
-    );
-  }
-
-  Widget _buildMediaItem(BuildContext context, MediaPost media) {
-    final mediaType = _determineMediaType(media.mediaUrl);
-
-    return GestureDetector(
-      onTap: () {
-        if (media.mediaUrl.isNotEmpty) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => VideoPlayerScreen(videoUrl: media.mediaUrl),
-            ),
-          );
-        }
-      },
-      child: Container(
-        height: 200,
-        width: MediaQuery.of(context).size.width / 2 - 15,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-          color: Colors.black12,
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(15),
-          child: _buildMediaContent(media.mediaUrl, mediaType),
-        ),
-      ),
-    );
-  }
-
-  String _determineMediaType(String url) {
-    if (RegExp(r'\.jpe?g$|\.png$', caseSensitive: false).hasMatch(url)) {
-      return 'image';
-    } else if (RegExp(r'\.mov|\.avi|\.mp4$', caseSensitive: false)
-        .hasMatch(url)) {
-      return 'video';
-    }
-    return 'unknown';
-  }
-
-  Widget _buildMediaContent(String url, String mediaType) {
-    if (url.isEmpty) {
-      return const Icon(Icons.broken_image, color: Colors.grey);
-    }
-
-    return mediaType == "image"
-        ? Image.network(url, fit: BoxFit.cover)
-        : VideoThumbnail(videoUrl: url);
-  }
-}

@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:crispy/provider/action/action_provider.dart';
+import 'package:crispy/provider/mediaPost/media_post_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -46,6 +47,7 @@ class _SplashScreenState extends State<SplashScreen> {
               .fetchSavedPosts(currentUser),
           Provider.of<SuggestedUsersProvider>(context, listen: false)
               .fetchSuggestedUsers(currentUser),
+
         ]);
       }
 
@@ -54,7 +56,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
       // Navigation
       if (auth.currentUser != null) {
-        log('User is logged in: ${auth.currentUser}');
         Get.off(() => const MainScreen());
       } else {
         Get.off(() => const OnBoardingScreenOne());

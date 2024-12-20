@@ -66,15 +66,6 @@ class SettingsScreen extends StatelessWidget {
               },
             ),
             _buildSettingsTile(
-              image: AppIcons.profile,
-              title: 'Profile Setting',
-              onTap: () {
-                Get.toNamed(RoutesName.editProfile);
-
-                // Add navigation or action here
-              },
-            ),
-            _buildSettingsTile(
               image: AppIcons.share,
               title: 'Privacy Policy',
               onTap: () {

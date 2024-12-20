@@ -21,6 +21,34 @@ class ProfileProvider extends ChangeNotifier {
   File? get profileImage => _profileImage;
   bool get isLoading => _isLoading;
 
+  // Add controllers as class members
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController bioController = TextEditingController();
+  final TextEditingController instaController = TextEditingController();
+  final TextEditingController fbController = TextEditingController();
+  bool _initialized = false;
+
+  // Method to initialize controllers
+  void initializeControllers(Map<String, dynamic> userData) {
+    if (!_initialized) {
+      nameController.text = userData['name'] ?? '';
+      bioController.text = userData['bio'] ?? '';
+      instaController.text = userData['instagram'] ?? '';
+      fbController.text = userData['facebook'] ?? '';
+      _selectedGender = userData['gender'] ?? '';
+      _initialized = true;
+    }
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    bioController.dispose();
+    instaController.dispose();
+    fbController.dispose();
+    super.dispose();
+  }
+
   // Method to pick the background image from gallery
   Future<void> pickBackgroundImage() async {
     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
@@ -159,14 +187,21 @@ class ProfileProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-  //clear
+
+  // Update clear method to reset controllers
   void clear() {
     _backgroundImage = null;
     _profileImage = null;
     _imageUrl = null;
     _selectedGender = '';
+    nameController.clear();
+    bioController.clear();
+    instaController.clear();
+    fbController.clear();
+    _initialized = false;
     notifyListeners();
   }
+
   //select gender
   String _selectedGender = ''; // Default value
 
@@ -175,5 +210,10 @@ class ProfileProvider extends ChangeNotifier {
   void setGender(String gender) {
     _selectedGender = gender;
     notifyListeners(); // Notify listeners to rebuild UI
+  }
+
+  void setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
   }
 }

@@ -306,8 +306,11 @@ class ActionProvider extends ChangeNotifier {
   final Map<String, bool> _followStatus = {};
 
   // Check if the current user follows another user
-  bool isFollowed(String userId) => _followStatus[userId] ?? false;
-
+  // bool isFollowed(String userId) => _followStatus[userId] ?? false;
+  bool isFollowed(String postId, List<String> Followed) {
+    final userId = auth.currentUser?.uid ?? "";
+    return Followed.contains(userId);
+  }
   // Update followers and following in Firestore
   Future<void> followUser(String userUid, String otherUserUid) async {
     if (currentUser != null) {
@@ -342,13 +345,11 @@ class ActionProvider extends ChangeNotifier {
       log("Error while unfollowing user: $e");
     }
   }
-
-
   Future<void> toggleFollow(String userUid, String otherUserUid) async {
     if (currentUser != null) {
       final currentUserId = currentUser!;
       final userSnapshot =
-          await fireStore.collection('users').doc(otherUserUid).get();
+      await fireStore.collection('users').doc(otherUserUid).get();
 
       // Check if the current user is already following the other user
       final List<dynamic> followers = userSnapshot['followers'] ?? [];
@@ -367,14 +368,6 @@ class ActionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Toggle follow status locally and sync with Firestore
-  void toggleFolloww(String userId, String otherUserId) {
-    _followStatus[userId] = !(_followStatus[userId] ?? false);
-    notifyListeners();
-
-    // Update Firestore in the background
-    toggleFollow(userId, otherUserId);
-  }
 //////////////who can see this post/////////
 
   String _selectedOption = 'Everyone';
@@ -388,8 +381,6 @@ class ActionProvider extends ChangeNotifier {
   bool isSelected(String option) {
     return _selectedOption == option;
   }
-
-  //////////////////pick image or photo from gallery or camera///////
 
   Uint8List? mediaBytes; // To store media bytes (image or video)
   String? mediaType; // To store media type (image or video)
@@ -448,9 +439,11 @@ class ActionProvider extends ChangeNotifier {
       String postOwnerId,
       String notificationBody,
       ) async {
+    var id = FirebaseFirestore.instance.collection('posts').doc(postId).collection('comments').doc().id;
+
     final userId = currentUser;
     final comment = CommentModel(
-      commentId: timestampId,
+      commentId: id,
       userId: userId,
       content: content,
       timestamp: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -460,7 +453,7 @@ class ActionProvider extends ChangeNotifier {
         .collection('posts')
         .doc(postId)
         .collection('comments')
-        .doc(timestampId)
+        .doc(id)
         .set(comment.toMap());
     _uploadNotification(
         token,

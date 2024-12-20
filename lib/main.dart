@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:crispy/model/res/constant/app_utils.dart';
 import 'package:crispy/provider/action/action_provider.dart';
 import 'package:crispy/provider/appLifeCycle/appLifeCycleProvider.dart';
 import 'package:crispy/provider/bottomNavBar/bottomNavBarProvider.dart';
@@ -7,6 +8,7 @@ import 'package:crispy/provider/callProvider/videoCallProvider.dart';
 import 'package:crispy/provider/chat/chatProvider.dart';
 import 'package:crispy/provider/cloudinary/cloudinary_provider.dart';
 import 'package:crispy/provider/current_user/current_user_provider.dart';
+import 'package:crispy/provider/mediaPost/media_post_provider.dart';
 import 'package:crispy/provider/mediaSelection/mediaSelectionProvider.dart';
 import 'package:crispy/provider/notification/notificationProvider.dart';
 import 'package:crispy/provider/otherUserData/otherUserDataProvider.dart';
@@ -56,6 +58,7 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   final fcmService = FCMService();
   await fcmService.initialize();
+  AppUtils().setPortrait();
 
   RemoteMessage? initialMessage =
   await FirebaseMessaging.instance.getInitialMessage();
@@ -99,6 +102,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SavedPostsProvider()),
         ChangeNotifierProvider(create: (_) => PostCacheProvider()),
         ChangeNotifierProvider(create: (_) => SuggestedUsersProvider()),
+        ChangeNotifierProvider(create: (_) => MediaPostProvider()),
+
       ],
       child: Consumer<AppLifeCycleProvider>(
           builder: (context,provider,child) {
@@ -108,6 +113,7 @@ class MyApp extends StatelessWidget {
                     theme: ThemeData(
                         scaffoldBackgroundColor: Colors.white
                     ),
+
                     debugShowCheckedModeBanner: false,
                     title: 'Crispy Talk',
                     initialRoute: RoutesName.splashScreen,

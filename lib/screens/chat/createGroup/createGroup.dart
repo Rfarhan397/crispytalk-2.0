@@ -46,16 +46,19 @@ class _CreateGroupState extends State<CreateGroup> {
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
+        onPressed:  profile.isLoading ? null:
+            () async {
           createGroupChat(context, provider, _groupNameController, profile,cloud);
-
         },
         backgroundColor: Colors.transparent,
         splashColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Colors.transparent,
-        child: SvgPicture.asset(AppIcons.next),
+        child: profile.isLoading ?
+        const CircularProgressIndicator(color: primaryColor,)
+            : SvgPicture.asset(AppIcons.next),
       ),
+
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -66,7 +69,7 @@ class _CreateGroupState extends State<CreateGroup> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  AppBackButton(),
+                  const AppBackButton(),
                   SizedBox(
                     width: 2.h,
                   ),
@@ -270,7 +273,7 @@ class _CreateGroupState extends State<CreateGroup> {
                             radius: 25,
                             backgroundImage: dUser.profileUrl.isNotEmpty
                                 ? NetworkImage(dUser.profileUrl)
-                                : AssetImage(AppAssets.noProfile)
+                                : const AssetImage(AppAssets.noProfile)
                             as ImageProvider,
                           ),
                           title: AppTextWidget(
@@ -417,29 +420,29 @@ class _CreateGroupState extends State<CreateGroup> {
   }
 }
 
-  PopupMenuItem<String> buildMenuItem(
-      BuildContext context, String value, ActionProvider menuProvider) {
-    return PopupMenuItem<String>(
-      value: value,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
+PopupMenuItem<String> buildMenuItem(
+    BuildContext context, String value, ActionProvider menuProvider) {
+  return PopupMenuItem<String>(
+    value: value,
+    child: Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: menuProvider.selectedItem == value
+            ? const Color(0xffEDFE19)
+            : Colors.transparent,
+      ),
+      child: Text(
+        value,
+        style: TextStyle(
           color: menuProvider.selectedItem == value
-              ? const Color(0xffEDFE19)
-              : Colors.transparent,
-        ),
-        child: Text(
-          value,
-          style: TextStyle(
-            color: menuProvider.selectedItem == value
-                ? Colors.black
-                : Colors.white,
-          ),
+              ? Colors.black
+              : Colors.white,
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
 class CustomCheckbox extends StatelessWidget {
   final bool isChecked;

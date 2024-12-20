@@ -48,6 +48,9 @@ final bool obscureText;
   Widget build(BuildContext context) {
     final isDarkMode = Provider.of<ThemeLanguageProvider>(context).isDarkMode;
     return TextFormField(
+      onTapOutside: (value){
+        FocusScope.of(context).requestFocus(FocusNode());
+      },
       maxLines: 1,
       style: const TextStyle(
         color: AppColors.appBlackColor,

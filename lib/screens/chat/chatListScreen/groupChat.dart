@@ -51,19 +51,20 @@ class GroupChatScreen extends StatelessWidget {
         leading: GestureDetector(
             onTap: () {
               Get.back();
+              Get.back();
             },
             child: const Icon(Icons.arrow_back_ios,
                 size: 18, color: Colors.white)),
         title: GestureDetector(
           onTap: () async {
-
+            log('huhuhuhuh$admin');
             Get.toNamed(RoutesName.editGroupDetails,
             arguments: {
               'groupName': groupName,
               'groupImage': groupImage,
               'groupID': groupID,
               'admin': admin,
-            }
+            },
             );
           },
           child: ListTile(

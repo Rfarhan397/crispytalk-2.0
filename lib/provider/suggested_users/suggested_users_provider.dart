@@ -42,4 +42,9 @@ class SuggestedUsersProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+  void removeUserFromSuggestions(String userId) {
+    suggestedUsers.removeWhere((user) =>
+    (user.data() as Map<String, dynamic>)['userUid'] == userId);
+    notifyListeners();
+  }
 } 
