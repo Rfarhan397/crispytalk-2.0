@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crispy/model/services/fcm/fcm_services.dart';
+import 'package:crispy/provider/current_user/current_user_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -57,8 +58,6 @@ class ActionProvider extends ChangeNotifier {
     _selectedIndex = index;
     notifyListeners();
   }
-
-
 
   void onHover(int index, bool isHovered) {
     _isHovered[index] = isHovered;
@@ -207,7 +206,9 @@ class ActionProvider extends ChangeNotifier {
   }
 
   ///////////to like and unlike the post //////
-  Future<void> likePost(String postId,) async {
+  Future<void> likePost(
+    String postId,
+  ) async {
     final userId = auth.currentUser?.uid.toString() ?? "";
 
     if (userId.isNotEmpty) {
@@ -233,24 +234,26 @@ class ActionProvider extends ChangeNotifier {
 
   // Check if the current user liked the post
   bool isPostLiked(
-      String postId,
-      List<String> likes,
-
-
-      ) {
+    String postId,
+    List<String> likes,
+  ) {
     final userId = auth.currentUser?.uid ?? "";
 
     return likes.contains(userId);
   }
 
   // Toggle like/unlike
-  Future<void> toggleLike(String postId, List<String> likes,) async {
+  Future<void> toggleLike(
+    String postId,
+    List<String> likes,
+  ) async {
     final userId = auth.currentUser?.uid ?? "";
     if (likes.contains(userId)) {
       await unlikePost(postId);
     } else {
-      await likePost(postId,);
-
+      await likePost(
+        postId,
+      );
     }
     notifyListeners();
   }
@@ -294,13 +297,11 @@ class ActionProvider extends ChangeNotifier {
     final userId = auth.currentUser?.uid ?? "";
     if (saved.contains(currentUser)) {
       await unSavePost(postId);
-
     } else {
       await savePost(postId);
     }
     notifyListeners(); // Trigger rebuild to update icon
   }
-
 
   //new way
   void toggleSaveNew(String timeStamp, List saves) {
@@ -312,14 +313,15 @@ class ActionProvider extends ChangeNotifier {
     // Notify listeners about the change
     notifyListeners();
   }
+
 ////////////to Follow user m firestore //////
   final FirebaseFirestore fireStore = FirebaseFirestore.instance;
-
 
   bool isFollowed(String postId, List<String> Followed) {
     final userId = auth.currentUser?.uid ?? "";
     return Followed.contains(userId);
   }
+
   // Update followers and following in Firestore
   Future<void> followUser(String userUid, String otherUserUid) async {
     if (currentUser != null) {
@@ -342,11 +344,17 @@ class ActionProvider extends ChangeNotifier {
     try {
       log("Unfollowing user: $currentUserUid -> $otherUserUid");
 
-      await FirebaseFirestore.instance.collection('users').doc(otherUserUid).update({
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(otherUserUid)
+          .update({
         'followers': FieldValue.arrayRemove([currentUserUid]),
       });
 
-      await FirebaseFirestore.instance.collection('users').doc(currentUserUid).update({
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUserUid)
+          .update({
         'following': FieldValue.arrayRemove([otherUserUid]),
       });
       log("Unfollowed user successfully!");
@@ -354,11 +362,12 @@ class ActionProvider extends ChangeNotifier {
       log("Error while unfollowing user: $e");
     }
   }
+
   Future<void> toggleFollow(String userUid, String otherUserUid) async {
     if (currentUser != null) {
       final currentUserId = currentUser!;
       final userSnapshot =
-      await fireStore.collection('users').doc(otherUserUid).get();
+          await fireStore.collection('users').doc(otherUserUid).get();
 
       // Check if the current user is already following the other user
       final List<dynamic> followers = userSnapshot['followers'] ?? [];
@@ -366,11 +375,9 @@ class ActionProvider extends ChangeNotifier {
       if (followers.contains(currentUserId)) {
         log("Unfollowing $otherUserUid");
         await unFollowUser(userUid, otherUserUid);
-
       } else {
         log("Following $otherUserUid");
         await followUser(userUid, otherUserUid);
-
       }
     }
 
@@ -391,15 +398,14 @@ class ActionProvider extends ChangeNotifier {
     return _selectedOption == option;
   }
 
-   Uint8List? mediaBytes;
+  Uint8List? mediaBytes;
   String? mediaType;
 //new
   String? mediaPath;
   String? uploadedMediaUrl;
   String? uploadedMediaName;
   String? uploadedMediaTypee;
-  String? uploadedThumbnailUrl;  // To store the thumbnail URL
-
+  String? uploadedThumbnailUrl; // To store the thumbnail URL
 
 //api start
   Future<void> uploadFile() async {
@@ -430,7 +436,7 @@ class ActionProvider extends ChangeNotifier {
       if (response.statusCode != 200) {
         log('Error: ${response.statusCode}');
         throw Exception('File upload failed');
-      }else{
+      } else {
         log("${response.statusCode}");
         final responseBody = await response.stream.bytesToString();
         final jsonResponse = json.decode(responseBody);
@@ -439,15 +445,17 @@ class ActionProvider extends ChangeNotifier {
 
         // Check if the uploaded URL ends with specific video extensions
         String uploadedUrl = '${jsonResponse['file']['url']}';
-        if (uploadedUrl.endsWith('.mp4') || uploadedUrl.endsWith('.mov') || uploadedUrl.endsWith('.avi')) {
+        if (uploadedUrl.endsWith('.mp4') ||
+            uploadedUrl.endsWith('.mov') ||
+            uploadedUrl.endsWith('.avi')) {
           uploadedMediaType = 'mp4';
           // await extractThumbnail(_filePath!);
-
         } else {
           uploadedMediaType = 'image';
         }
         // save in these variables
-        uploadedMediaUrl = '${jsonResponse['file']['url']}'; // Replace with actual URL
+        uploadedMediaUrl =
+            '${jsonResponse['file']['url']}'; // Replace with actual URL
         uploadedMediaName = '${jsonResponse['file']['name']}';
         uploadedMediaTypee = uploadedMediaType;
       }
@@ -502,7 +510,7 @@ class ActionProvider extends ChangeNotifier {
       if (response.statusCode != 200) {
         log('Error: ${response.statusCode}');
         throw Exception('File upload failed');
-      }else{
+      } else {
         log("${response.statusCode}");
         final responseBody = await response.stream.bytesToString();
         final jsonResponse = json.decode(responseBody);
@@ -511,13 +519,16 @@ class ActionProvider extends ChangeNotifier {
 
         // Check if the uploaded URL ends with specific video extensions
         String uploadedUrl = '${jsonResponse['file']['url']}';
-        if (uploadedUrl.endsWith('.mp4') || uploadedUrl.endsWith('.mov') || uploadedUrl.endsWith('.avi')) {
+        if (uploadedUrl.endsWith('.mp4') ||
+            uploadedUrl.endsWith('.mov') ||
+            uploadedUrl.endsWith('.avi')) {
           uploadedMediaType = 'mp4';
         } else {
           uploadedMediaType = 'image';
         }
         // save in these variables
-        uploadedMediaUrl = '${jsonResponse['file']['url']}'; // Replace with actual URL
+        uploadedMediaUrl =
+            '${jsonResponse['file']['url']}'; // Replace with actual URL
         uploadedMediaName = '${jsonResponse['file']['name']}';
         uploadedMediaTypee = uploadedMediaType;
         //saved
@@ -533,6 +544,7 @@ class ActionProvider extends ChangeNotifier {
       throw "File upload failed:: ${e.toString()}";
     }
   }
+
   //clear uploadedmedaiUrl
   void clearUploadedMediaUrl() {
     uploadedMediaUrl = null;
@@ -590,17 +602,14 @@ class ActionProvider extends ChangeNotifier {
 //   }
   //end
 
-
   String? _filePath;
 
   String? get filePath => _filePath;
 
-  void savePath(path){
+  void savePath(path) {
     _filePath = path;
     notifyListeners();
-
   }
-
 
   pickMedia(BuildContext context) async {
     log('enter in pickMedia');
@@ -650,14 +659,20 @@ class ActionProvider extends ChangeNotifier {
   }
 
 //////////////add comment to posts//////
-  Future<void> addComment(String postId,
-      String content,
-      String token,
-      String currentUserName,
-      String postOwnerId,
-      String notificationBody,
-      ) async {
-    var id = FirebaseFirestore.instance.collection('posts').doc(postId).collection('comments').doc().id;
+  Future<void> addComment(
+    String postId,
+    String content,
+    String token,
+    String currentUserName,
+    String postOwnerId,
+    String notificationBody,
+  ) async {
+    var id = FirebaseFirestore.instance
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .doc()
+        .id;
 
     final userId = currentUser;
     final comment = CommentModel(
@@ -674,11 +689,11 @@ class ActionProvider extends ChangeNotifier {
         .doc(id)
         .set(comment.toMap());
     _uploadNotification(
-        token,
-        currentUserName,
-        postOwnerId,
-        postId,
-        notificationBody,
+      token,
+      currentUserName,
+      postOwnerId,
+      postId,
+      notificationBody,
     );
   }
 
@@ -710,6 +725,7 @@ class ActionProvider extends ChangeNotifier {
       );
     }
   }
+
   Future<void> pickImages2(context, docId) async {
     final chatProvider = ChatProvider();
     final List<XFile> pickedFiles = await _picker.pickMultiImage();
@@ -721,6 +737,7 @@ class ActionProvider extends ChangeNotifier {
       );
     }
   }
+
   Future<void> pickSingleImages(context, docId) async {
     final chatProvider = ChatProvider();
     final List<XFile> pickedFiles = await _picker.pickMultiImage();
@@ -732,6 +749,7 @@ class ActionProvider extends ChangeNotifier {
       );
     }
   }
+
   Future<bool?> showDeleteConfirmationDialog(BuildContext context) async {
     return await showDialog<bool>(
       context: context,
@@ -758,7 +776,7 @@ class ActionProvider extends ChangeNotifier {
     );
   }
 
-  void deleteMessage(String collection,messageId,docId) async {
+  void deleteMessage(String collection, messageId, docId) async {
     try {
       await FirebaseFirestore.instance
           .collection(collection)
@@ -783,7 +801,7 @@ class ActionProvider extends ChangeNotifier {
     }
   }
 
-  void deleteUser() async{
+  void deleteUser() async {
     try {
       await FirebaseFirestore.instance
           .collection('users') // Firestore collection name
@@ -795,13 +813,11 @@ class ActionProvider extends ChangeNotifier {
     } catch (e) {
       Get.back();
       AppUtils().showToast(text: "Failed to remove user: $e");
-
     }
   }
 
   void _uploadNotification(String token, String currentUserName,
-      notificationBody
-  , String postOwnerId, String postId) {
+      notificationBody, String postOwnerId, String postId) {
     // Send the notification via FCM
     FCMService().sendNotification(
       token,
@@ -829,13 +845,15 @@ class ActionProvider extends ChangeNotifier {
     required String type,
   }) async {
     try {
-      var notificationRef = FirebaseFirestore.instance.collection('users')
+      var notificationRef = FirebaseFirestore.instance
+          .collection('users')
           .doc(recipientId)
           .collection('notifications')
           .doc();
-
+      print('iddddd...........');
+      print(recipientId);
       await notificationRef.set({
-        'id': notificationRef.id,  // Set the document ID here
+        'id': notificationRef.id,
         'recipientId': recipientId,
         'senderId': senderId,
         'message': message,
@@ -847,24 +865,31 @@ class ActionProvider extends ChangeNotifier {
       log('Error saving notification: $e');
     }
   }
+
   Future<void> removeUser(String currentUserUid, String otherUserUid) async {
     try {
       log("Unfollowing user: $currentUserUid -> $otherUserUid");
 
-      await FirebaseFirestore.instance.collection('users').doc(currentUserUid).update({
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUserUid)
+          .update({
         'followers': FieldValue.arrayRemove([otherUserUid]),
       });
 
-      await FirebaseFirestore.instance.collection('users').doc(otherUserUid).update({
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(otherUserUid)
+          .update({
         'following': FieldValue.arrayRemove([currentUserUid]),
       });
-
 
       log("Unfollowed user successfully!");
     } catch (e) {
       log("Error while unfollowing user: $e");
     }
   }
+
   Future<void> removeComment(String postId, String commentId) async {
     try {
       log('Attempting to delete comment. Post ID: $postId, Comment ID: $commentId');
@@ -883,20 +908,19 @@ class ActionProvider extends ChangeNotifier {
       AppUtils().showToast(text: 'Error: $e');
     }
   }
+
   Future<void> reportUser({
     String? userID,
     String? text,
   }) async {
     try {
-      final docRef = FirebaseFirestore.instance
-          .collection("reports")
-          .doc();
+      final docRef = FirebaseFirestore.instance.collection("reports").doc();
       await docRef.set({
         'text': text,
         'createdAt': DateTime.now().millisecondsSinceEpoch.toString(),
-        'reportTo':userID,
-        'reportBy':currentUser,
-        'docID':docRef.id
+        'reportTo': userID,
+        'reportBy': currentUser,
+        'docID': docRef.id
       });
 
       log("Text stored successfully in Firestore.");
@@ -906,46 +930,64 @@ class ActionProvider extends ChangeNotifier {
     }
   }
 
-
   final List<MediaPost> _posts = [];
 
   List<MediaPost> get posts => _posts;
 
-
-  void saveModel(List<MediaPost> posts){
+  void saveModel(List<MediaPost> posts) {
     _posts.clear();
     _posts.addAll(posts);
     notifyListeners();
   }
 
-  void toggleListCheck(int index,{required ToggleType type}){
-
-    switch(type){
+  void toggleListCheck(int index,
+      {required ToggleType type, required BuildContext context}) {
+    switch (type) {
       case ToggleType.like:
-        if (_posts[index].likes.contains(currentUser)){
+        if (_posts[index].likes.contains(currentUser)) {
           log("Remove Likes");
           posts[index].likes.remove(currentUser);
           unlikePost(_posts[index].timeStamp);
-        }else{
+        } else {
           log("Add Likes");
           posts[index].likes.add(currentUser);
           likePost(_posts[index].timeStamp);
+          FCMService().sendNotification(
+              posts[index].userDetails?.fcmToken ?? '',
+              'New Notification',
+              'abc user like your post',
+              currentUser);
+          print('strttt like..............');
+          try {
+            _saveNotificationToFirestore(
+              recipientId: posts[index].userDetails!.userUid,
+              senderId: currentUser,
+              message:
+                  '${Provider.of<CurrentUserProvider>(context, listen: false).currentUser!.name} liked your post',
+              postId: posts[index].timeStamp,
+              type: 'like',
+            );
+            print('success.......................................');
+          } catch (e) {
+            print('error..............');
+            print(e.toString());
+          }
         }
         break;
       case ToggleType.save:
-        if (_posts[index].saves.contains(currentUser)){
+        if (_posts[index].saves.contains(currentUser)) {
           log("Remove Likes");
           posts[index].saves.remove(currentUser);
           unSavePost(_posts[index].timeStamp);
-        }else{
-          log("Add Likes");
+        } else {
+          log("Add Likes............................................");
           posts[index].saves.add(currentUser);
           savePost(_posts[index].timeStamp);
+          // FCMService().sendNotification(posts[index].userDetails!.fcmToken,
+          //     'post like', 'abc liked your post', currentUser);
         }
         break;
     }
     notifyListeners();
   }
-
-
 }

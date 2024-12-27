@@ -94,9 +94,10 @@ class NotificationScreen extends StatelessWidget {
                                 child: Text(
                                   'Today',
                                   style: TextStyle(
-                                    color: notificationProvider.selectedIndex == 0
-                                        ? Colors.white
-                                        : primaryColor,
+                                    color:
+                                        notificationProvider.selectedIndex == 0
+                                            ? Colors.white
+                                            : primaryColor,
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -121,9 +122,10 @@ class NotificationScreen extends StatelessWidget {
                                 child: Text(
                                   'Last Week',
                                   style: TextStyle(
-                                    color: notificationProvider.selectedIndex == 1
-                                        ? Colors.white
-                                        : primaryColor,
+                                    color:
+                                        notificationProvider.selectedIndex == 1
+                                            ? Colors.white
+                                            : primaryColor,
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -139,15 +141,18 @@ class NotificationScreen extends StatelessWidget {
                 SizedBox(height: 3.h),
                 // Notification List
                 Expanded(
-                  child: StreamBuilder<List<Map<String, dynamic>>>(
-                    stream: StreamDataProvider()
-                        .getNotificationsWithUserDetails(currentUser),
+                  child: StreamBuilder(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(currentUser)
+                        .collection('notifications')
+                        .snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       }
 
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                         return const Center(
                           child: AppTextWidget(
                             text: "No notifications yet.",
@@ -158,46 +163,38 @@ class NotificationScreen extends StatelessWidget {
                       }
 
                       final notifications = snapshot.data!;
-                      final todayNotifications = notifications.where((notification) {
-                        final notificationDate = DateTime.fromMillisecondsSinceEpoch(int.parse(notification['timestamp']));
-                        return _isToday(notificationDate);
-                      }).toList();
+                      // final todayNotifications = notifications.where((notification) {
+                      //   final notificationDate = DateTime.fromMillisecondsSinceEpoch(int.parse(notification['timestamp']));
+                      //   return _isToday(notificationDate);
+                      // }).toList();
 
-                      final lastWeekNotifications = notifications.where((notification) {
-                        final notificationDate = DateTime.fromMillisecondsSinceEpoch(int.parse(notification['timestamp']));
-                        return !_isToday(notificationDate);
-                      }).toList();
+                      // final lastWeekNotifications = notifications.where((notification) {
+                      //   final notificationDate = DateTime.fromMillisecondsSinceEpoch(int.parse(notification['timestamp']));
+                      //   return !_isToday(notificationDate);
+                      // }).toList();
+                      //
+                      // return Consumer<NotificationProvider>(
+                      //   builder: (context, notificationProvider, _) {
+                      //     final selectedNotifications = notificationProvider.selectedIndex == 0
+                      //         ? todayNotifications
+                      //         : lastWeekNotifications;
+                      //
+                      //     if (selectedNotifications.isEmpty) {
+                      //       return const Center(
+                      //         child: AppTextWidget(
+                      //           text: "No notifications in this category.",
+                      //           fontSize: 16,
+                      //           color: Colors.grey,
+                      //         ),
+                      //       );
+                      //     }
 
-                      return Consumer<NotificationProvider>(
-                        builder: (context, notificationProvider, _) {
-                          final selectedNotifications = notificationProvider.selectedIndex == 0
-                              ? todayNotifications
-                              : lastWeekNotifications;
-
-                          if (selectedNotifications.isEmpty) {
-                            return const Center(
-                              child: AppTextWidget(
-                                text: "No notifications in this category.",
-                                fontSize: 16,
-                                color: Colors.grey,
-                              ),
-                            );
-                          }
-
-                          return ListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: selectedNotifications.length,
-                            itemBuilder: (context, index) {
-                              final notification = selectedNotifications[index];
-                              return NotificationCard(
-                                title: notification['senderName'] ?? 'Unknown',
-                                subtitle: notification['message'] ?? '',
-                                imageUrl: notification['senderProfileUrl'] ?? '',
-                                time: _formatTime(notification['timestamp']),
-                                actionText: 'View',
-                              );
-                            },
-                          );
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: notifications.docs.length,
+                        itemBuilder: (context, index) {
+                          final notification = notifications.docs[index];
+                          return Text(index.toString());
                         },
                       );
                     },
@@ -213,7 +210,9 @@ class NotificationScreen extends StatelessWidget {
 
   bool _isToday(DateTime date) {
     final now = DateTime.now();
-    return date.year == now.year && date.month == now.month && date.day == now.day;
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
   }
 
   String _formatTime(String timestamp) {
@@ -257,7 +256,7 @@ class NotificationCard extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-               CircleAvatar(
+              CircleAvatar(
                 radius: 20,
                 child: ClipRRect(
                     borderRadius: BorderRadius.circular(100),

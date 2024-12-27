@@ -11,12 +11,16 @@ import '../../screens/chat/Groups/groupList.dart';
 
 class StreamDataProvider extends ChangeNotifier {
   Stream<List<UserModelT>> getUsers() {
-    return FirebaseFirestore.instance.collection('users').snapshots().map((snapshot) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .snapshots()
+        .map((snapshot) {
       return snapshot.docs.map((doc) {
         return UserModelT.fromMap(doc.data());
       }).toList();
     });
   }
+
   Stream<UserModelT> getSingleUser(String userID) {
     return FirebaseFirestore.instance
         .collection('users')
@@ -31,12 +35,12 @@ class StreamDataProvider extends ChangeNotifier {
     });
   }
 
-   Future<UserModelT> getCurrentUser() async{
-   final data = await  FirebaseFirestore.instance
+  Future<UserModelT> getCurrentUser() async {
+    final data = await FirebaseFirestore.instance
         .collection('users')
         .doc(currentUser)
         .get();
-   return UserModelT.fromMap(data.data()!);
+    return UserModelT.fromMap(data.data()!);
   }
 
   Stream<List<CommentWithUser>> getCommentsWithUserDetails(String postId) {
@@ -46,12 +50,16 @@ class StreamDataProvider extends ChangeNotifier {
         .collection('comments')
         .snapshots()
         .asyncMap((snapshot) async {
-      final commentsWithUserDetails = await Future.wait(snapshot.docs.map((doc) async {
+      final commentsWithUserDetails =
+          await Future.wait(snapshot.docs.map((doc) async {
         // Get comment data
         final comment = CommentModel.fromMap(doc.data());
 
         // Get user data using userId from the comment
-        final userDoc = await FirebaseFirestore.instance.collection('users').doc(comment.userId).get();
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(comment.userId)
+            .get();
         UserModelT? user;
         if (userDoc.exists) {
           user = UserModelT.fromMap(userDoc.data()!);
@@ -64,7 +72,6 @@ class StreamDataProvider extends ChangeNotifier {
       return commentsWithUserDetails;
     });
   }
-
 
   Stream<List<MediaPost>> getPostsWithUserDetails({
     required String currentUserId,
@@ -80,7 +87,8 @@ class StreamDataProvider extends ChangeNotifier {
           .get();
 
       final currentUserData = currentUserDoc.data() as Map<String, dynamic>?;
-      final blockedUserIds = List<String>.from(currentUserData?['blocks'] ?? []);
+      final blockedUserIds =
+          List<String>.from(currentUserData?['blocks'] ?? []);
 
       // Create base query for posts
       Query postsQuery = FirebaseFirestore.instance
@@ -125,28 +133,30 @@ class StreamDataProvider extends ChangeNotifier {
 
           // Create map of user details
           final userMap = {
-            for (var user in usersData) user['userUid']: UserModelT.fromMap(user)
+            for (var user in usersData)
+              user['userUid']: UserModelT.fromMap(user)
           };
 
           // Map posts with user details
           return snapshot.docs
               .map((doc) {
                 final postData = doc.data();
-                final userUid = (postData as Map<String, dynamic>)['userUid'] as String?;
-                
+                final userUid =
+                    (postData as Map<String, dynamic>)['userUid'] as String?;
+
                 // Skip posts from blocked users
                 if (userUid == null || blockedUserIds.contains(userUid)) {
                   return null;
                 }
 
-                final mediaPost = MediaPost.fromMap(postData as Map<String, dynamic>);
+                final mediaPost =
+                    MediaPost.fromMap(postData as Map<String, dynamic>);
                 mediaPost.userDetails = userMap[mediaPost.userUid];
                 return mediaPost;
               })
               .whereType<MediaPost>() // Remove null entries
               .where((post) => post.userDetails != null)
               .toList();
-
         } catch (e) {
           print('Error processing posts: $e');
           return [];
@@ -157,11 +167,12 @@ class StreamDataProvider extends ChangeNotifier {
       yield [];
     }
   }
+
   //fetch postsWithUserDetails from firebase
   Stream<List<MediaPost>> getSinglePostsWithUserDetails() {
     return FirebaseFirestore.instance
         .collection('posts')
-    .where('userUid',isEqualTo: currentUser)
+        .where('userUid', isEqualTo: currentUser)
         .snapshots()
         .asyncMap((querySnapshot) async {
       List<MediaPost> posts = [];
@@ -190,7 +201,10 @@ class StreamDataProvider extends ChangeNotifier {
   Stream<List<UserModelT>> getBlockedUsers(String userID) async* {
     try {
       // Get the current user's block list
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(userID).get();
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userID)
+          .get();
       if (!userDoc.exists) {
         yield [];
         return;
@@ -200,9 +214,13 @@ class StreamDataProvider extends ChangeNotifier {
       final blocks = List<String>.from(userData['blocks'] ?? []);
 
       // Stream all users and filter those in the block list
-      yield* FirebaseFirestore.instance.collection('users').snapshots().map((snapshot) {
+      yield* FirebaseFirestore.instance
+          .collection('users')
+          .snapshots()
+          .map((snapshot) {
         return snapshot.docs
-            .where((doc) => blocks.contains(doc.id)) // Filter users in the block list
+            .where((doc) =>
+                blocks.contains(doc.id)) // Filter users in the block list
             .map((doc) => UserModelT.fromMap(doc.data()))
             .toList();
       });
@@ -211,7 +229,6 @@ class StreamDataProvider extends ChangeNotifier {
       yield [];
     }
   }
-
 
   Stream<List<UserModelT>> getFollowingUsers(String currentUserId) {
     return FirebaseFirestore.instance
@@ -225,7 +242,8 @@ class StreamDataProvider extends ChangeNotifier {
 
       // Fetch user details for all users in the following list
       final users = await Future.wait(followingList.map((uid) async {
-        final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        final userDoc =
+            await FirebaseFirestore.instance.collection('users').doc(uid).get();
         if (userDoc.exists) {
           return UserModelT.fromMap(userDoc.data()!);
         }
@@ -236,8 +254,9 @@ class StreamDataProvider extends ChangeNotifier {
       return users.whereType<UserModelT>().toList();
     });
   }
+
   Future<void> updateFcmToken() async {
-    final uid =  currentUser;
+    final uid = currentUser;
     log('message$currentUser');
     String? token = '';
     if (Platform.isAndroid) {
@@ -251,20 +270,21 @@ class StreamDataProvider extends ChangeNotifier {
     });
   }
 
-
   // Fetch all groups as a stream of Group objects filtered by current user UID
   Stream<List<Group>> getAllGroupsStream(String currentUserUid) {
     return fireStore.collection('groupChats').snapshots().map((querySnapshot) {
       return querySnapshot.docs
           .map((doc) {
-        final group = Group.fromFirestore(doc.data() as Map<String, dynamic>);
-        return group.members.contains(currentUserUid) ? group : null;
-      })
+            final group =
+                Group.fromFirestore(doc.data() as Map<String, dynamic>);
+            return group.members.contains(currentUserUid) ? group : null;
+          })
           .where((group) => group != null)
           .cast<Group>()
           .toList();
     });
   }
+
   Future<List<GroupUserModel>> getGroupMembers(String groupID) async {
     final groupDoc = await FirebaseFirestore.instance
         .collection('groupChats')
@@ -276,10 +296,8 @@ class StreamDataProvider extends ChangeNotifier {
     // Fetch user details for each UID from the users collection
     List<GroupUserModel> members = [];
     for (String uid in memberUIDs) {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
 
       if (userDoc.exists) {
         final member = userDoc.data()!;
@@ -295,10 +313,12 @@ class StreamDataProvider extends ChangeNotifier {
     return members;
   }
 
-  Stream<List<Map<String, dynamic>>> getNotificationsWithUserDetails(String recipientId) {
-    return FirebaseFirestore.instance.collection('users').doc(currentUser)
+  Stream<List<Map<String, dynamic>>> getNotificationsWithUserDetails(
+      String recipientId) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser)
         .collection('notifications')
-        .where('recipientId', isEqualTo: recipientId)
         .snapshots()
         .asyncMap((notificationSnapshot) async {
       List<Map<String, dynamic>> notificationsWithUserDetails = [];
@@ -309,7 +329,10 @@ class StreamDataProvider extends ChangeNotifier {
 
         // Fetch sender details
         String senderId = notificationData['senderId'];
-        DocumentSnapshot senderSnapshot = await FirebaseFirestore.instance.collection('users').doc(senderId).get();
+        DocumentSnapshot senderSnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(senderId)
+            .get();
 
         if (senderSnapshot.exists) {
           var senderData = senderSnapshot.data() as Map<String, dynamic>;
@@ -325,7 +348,7 @@ class StreamDataProvider extends ChangeNotifier {
   }
 
   //current user followers
-  Stream<List<UserModelT>> fetchCurrentUserFollowers(userUid,followType) {
+  Stream<List<UserModelT>> fetchCurrentUserFollowers(userUid, followType) {
     return FirebaseFirestore.instance
         .collection('users') // Go to users collection
         .doc(userUid) // Fetch the current user's document
@@ -341,7 +364,8 @@ class StreamDataProvider extends ChangeNotifier {
       // Fetch details of all users in the followers list
       List<UserModelT> followersList = [];
       for (String uid in followersUids) {
-        final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        final userDoc =
+            await FirebaseFirestore.instance.collection('users').doc(uid).get();
         if (userDoc.exists && userDoc.data() != null) {
           followersList.add(UserModelT.fromMap(userDoc.data()!));
         }

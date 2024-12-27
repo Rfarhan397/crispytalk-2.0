@@ -28,7 +28,7 @@ class FCMService {
   );
 
   static const DarwinNotificationDetails _iOSNotificationDetails =
-  DarwinNotificationDetails(
+      DarwinNotificationDetails(
     presentAlert: true,
     presentBadge: true,
     presentSound: true,
@@ -40,6 +40,7 @@ class FCMService {
 
     await setupFlutterNotifications();
     await requestNotificationPermissions();
+
     configureFirebaseListeners();
   }
 
@@ -48,12 +49,12 @@ class FCMService {
   Future<void> setupFlutterNotifications() async {
     await _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>()
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_channel);
 
     await _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-        IOSFlutterLocalNotificationsPlugin>()
+            IOSFlutterLocalNotificationsPlugin>()
         ?.requestPermissions(alert: true, badge: true, sound: true);
 
     await _flutterLocalNotificationsPlugin.initialize(
@@ -100,7 +101,7 @@ class FCMService {
     if (additionalData.isNotEmpty) {
       if (additionalData['isVideo'] == 'true') {
         Get.to(
-              () => VideoCallScreen(
+          () => VideoCallScreen(
             callId: additionalData['callID'],
             isCaller: false,
             callerImage: additionalData['image'],
@@ -109,7 +110,7 @@ class FCMService {
         );
       } else if (additionalData['isVideo'] == 'false') {
         Get.to(
-              () => AudioCallScreen(
+          () => AudioCallScreen(
             callId: additionalData['callID'],
             isCaller: false,
             callerImage: additionalData['image'],
@@ -117,6 +118,7 @@ class FCMService {
           ),
         );
       }
+      showForegroundNotification(message);
     }
   }
 
@@ -148,7 +150,7 @@ class FCMService {
 
   Future<String> _getAccessToken() async {
     final String jsonString =
-    await rootBundle.loadString('android/app/messaging_services.json');
+        await rootBundle.loadString('android/app/messaging_services.json');
     final Map<String, dynamic> jsonData = json.decode(jsonString);
     final serviceAccount = ServiceAccountCredentials.fromJson(jsonData);
     final scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
@@ -187,7 +189,7 @@ class FCMService {
 
   Future<String> _getProjectId() async {
     final String jsonString =
-    await rootBundle.loadString('android/app/messaging_services.json');
+        await rootBundle.loadString('android/app/messaging_services.json');
     final Map<String, dynamic> jsonData = json.decode(jsonString);
     return jsonData['project_id'];
   }

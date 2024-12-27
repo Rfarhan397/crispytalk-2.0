@@ -46,7 +46,7 @@ class _AllvideolistwidgetState extends State<Allvideolistwidget> {
     // Initialize controllers for current, previous and next videos
     _controllers = List.generate(
       context.read<ActionProvider>().posts.length,
-          (index) => VideoPlayerController.network(
+      (index) => VideoPlayerController.network(
           customLink + context.read<ActionProvider>().posts[index].mediaUrl)
         ..initialize().then((_) {
           if (index == _currentIndex) {
@@ -78,7 +78,8 @@ class _AllvideolistwidgetState extends State<Allvideolistwidget> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUserProvider = Provider.of<CurrentUserProvider>(context, listen: false);
+    final currentUserProvider =
+        Provider.of<CurrentUserProvider>(context, listen: false);
     final actionP = Provider.of<ActionProvider>(context);
     return Scaffold(
       backgroundColor: Colors.black,
@@ -104,8 +105,8 @@ class _AllvideolistwidgetState extends State<Allvideolistwidget> {
                 child: post.mediaType == 'mp4'
                     ? VideoPlayer(_controllers[index])
                     : CachedShimmerImageWidget(
-                    imageUrl:  "$customLink${post.mediaUrl}",
-                    fit: BoxFit.cover),
+                        imageUrl: "$customLink${post.mediaUrl}",
+                        fit: BoxFit.cover),
               ),
               // User Info Overlay
               Positioned(
@@ -138,8 +139,8 @@ class _AllvideolistwidgetState extends State<Allvideolistwidget> {
                                 borderRadius: BorderRadius.circular(100),
                                 child: post.userDetails!.profileUrl.isNotEmpty
                                     ? CachedShimmerImageWidget(
-                                    imageUrl:
-                                    "$customLink${post.userDetails?.profileUrl}")
+                                        imageUrl:
+                                            "$customLink${post.userDetails?.profileUrl}")
                                     : Image.asset(AppAssets.noProfile)),
                           ),
                         ],
@@ -151,16 +152,13 @@ class _AllvideolistwidgetState extends State<Allvideolistwidget> {
                         return GestureDetector(
                           onTap: () {
                             if (post.userDetails?.fcmToken != null) {
-
-                              actionP.toggleListCheck(index,type: ToggleType.like);
+                              actionP.toggleListCheck(index,
+                                  type: ToggleType.like, context: context);
                               // Provider.of<ActionProvider>(context, listen: false)
                               //     .toggleLike(
                               //   post.timeStamp,
                               //   post.likes,
                               // );
-
-
-
                             }
                           },
                           child: Column(
@@ -227,7 +225,8 @@ class _AllvideolistwidgetState extends State<Allvideolistwidget> {
                     // Favorite Icon
                     GestureDetector(
                       onTap: () {
-                        actionP.toggleListCheck(index,type: ToggleType.save);
+                        actionP.toggleListCheck(index,
+                            type: ToggleType.save, context: context);
                       },
                       child: Column(
                         children: [
@@ -275,19 +274,19 @@ class _AllvideolistwidgetState extends State<Allvideolistwidget> {
               // Video Progress Bar
               post.mediaType == 'mp4'
                   ? Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: VideoProgressIndicator(
-                  _controllers[index],
-                  allowScrubbing: true,
-                  colors: const VideoProgressColors(
-                    playedColor: primaryColor,
-                    bufferedColor: Colors.grey,
-                    backgroundColor: Colors.white,
-                  ),
-                ),
-              )
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: VideoProgressIndicator(
+                        _controllers[index],
+                        allowScrubbing: true,
+                        colors: const VideoProgressColors(
+                          playedColor: primaryColor,
+                          bufferedColor: Colors.grey,
+                          backgroundColor: Colors.white,
+                        ),
+                      ),
+                    )
                   : SizedBox.shrink(),
             ],
           );

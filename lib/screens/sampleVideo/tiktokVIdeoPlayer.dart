@@ -101,17 +101,18 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                 child: Center(
                   child: post.mediaType == 'mp4'
                       ? _controllers[index].value.isInitialized
-                      ? AspectRatio(
-                    aspectRatio: _controllers[index].value.aspectRatio,
-                    child: VideoPlayer(_controllers[index]),
-                  )
-                      : const Center(
-                    child: CircularProgressIndicator(),
-                  )
+                          ? AspectRatio(
+                              aspectRatio:
+                                  _controllers[index].value.aspectRatio,
+                              child: VideoPlayer(_controllers[index]),
+                            )
+                          : const Center(
+                              child: CircularProgressIndicator(),
+                            )
                       : CachedShimmerImageWidget(
-                    imageUrl: "$customLink${post.mediaUrl}",
-                    fit: BoxFit.contain,
-                  ),
+                          imageUrl: "$customLink${post.mediaUrl}",
+                          fit: BoxFit.contain,
+                        ),
                 ),
               ),
 
@@ -146,7 +147,8 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                                 borderRadius: BorderRadius.circular(100),
                                 child: post.userDetails!.profileUrl.isNotEmpty
                                     ? CachedShimmerImageWidget(
-                                        imageUrl: "$customLink${post.userDetails?.profileUrl}")
+                                        imageUrl:
+                                            "$customLink${post.userDetails?.profileUrl}")
                                     : Image.asset(AppAssets.noProfile)),
                           ),
                         ],
@@ -158,7 +160,8 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                         return GestureDetector(
                           onTap: () {
                             if (post.userDetails?.fcmToken != null) {
-                              actionP.toggleListCheck(index,type: ToggleType.like);
+                              actionP.toggleListCheck(index,
+                                  type: ToggleType.like, context: context);
                             }
                           },
                           child: Column(
@@ -191,7 +194,6 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                           isDismissible: true,
                           enableDrag: true,
                           ignoreSafeArea: false,
-
                         );
                       },
                       child: Column(
@@ -227,7 +229,8 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                     // Favorite Icon
                     GestureDetector(
                       onTap: () {
-                        actionP.toggleListCheck(index,type: ToggleType.save);
+                        actionP.toggleListCheck(index,
+                            type: ToggleType.save, context: context);
                       },
                       child: Column(
                         children: [
