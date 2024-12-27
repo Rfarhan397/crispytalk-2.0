@@ -23,6 +23,7 @@ import '../../provider/postCache/postCacheProvider.dart';
 import '../../provider/stream/streamProvider.dart';
 import '../ImageDetail/image_detail.dart';
 import '../myProfile/otherUserProfile/otherUserProfile.dart';
+import '../myProfile/userProfile.dart';
 import '../sampleVideo/fullscreenSample.dart';
 import '../sampleVideo/tiktokVIdeoPlayer.dart';
 import '../video/videoScreen.dart';
@@ -447,18 +448,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         )
                       : mediaType == 'mp4'
                           ? SizedBox(
-                              // color: customGrey,
-                              // height: 30.h,
-                              width: double.infinity,
-                              child: VideoWidget(
-                                isAutoPlay: true,
-                                showPlayPauseButton: true,
-                                mediaUrl: customLink + video,
-                                onTogglePlayPause: () {
-                                  videoKey.currentState?.togglePlayPause();
-                                },
-                              ),
-                            )
+                    // height: 30.h,
+                            width: double.infinity,
+                            child: VideoWidget(
+                              isAutoPlay: false,
+                              showPlayPauseButton: true,
+                              mediaUrl: customLink + video,
+                              onTogglePlayPause: () {
+                                videoKey.currentState?.togglePlayPause();
+                              },
+                            ),
+                    // child: VideoThumbnail(videoUrl: customLink + video,)
+                          )
                           : const AppTextWidget(
                               text: 'Video Not Found',
                               color: Colors.black,

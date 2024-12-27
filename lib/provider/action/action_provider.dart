@@ -4,7 +4,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:crispy/core/base/end_point.dart';
 import 'package:crispy/model/services/fcm/fcm_services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -399,6 +398,8 @@ class ActionProvider extends ChangeNotifier {
   String? uploadedMediaUrl;
   String? uploadedMediaName;
   String? uploadedMediaTypee;
+  String? uploadedThumbnailUrl;  // To store the thumbnail URL
+
 
 //api start
   Future<void> uploadFile() async {
@@ -440,6 +441,8 @@ class ActionProvider extends ChangeNotifier {
         String uploadedUrl = '${jsonResponse['file']['url']}';
         if (uploadedUrl.endsWith('.mp4') || uploadedUrl.endsWith('.mov') || uploadedUrl.endsWith('.avi')) {
           uploadedMediaType = 'mp4';
+          // await extractThumbnail(_filePath!);
+
         } else {
           uploadedMediaType = 'image';
         }
@@ -447,27 +450,30 @@ class ActionProvider extends ChangeNotifier {
         uploadedMediaUrl = '${jsonResponse['file']['url']}'; // Replace with actual URL
         uploadedMediaName = '${jsonResponse['file']['name']}';
         uploadedMediaTypee = uploadedMediaType;
-        //saved
-        log('Uploaded: ${uploadedMediaUrl}');
-        log('Uploaded Media Type: ${uploadedMediaType}');
-        log('Uploaded Media Path: ${uploadedUrl}');
-        log('Uploaded Media Name: ${uploadedMediaName}');
-        log("Single Response: \n"
-            "Message:: ${jsonResponse['message']}\n"
-            "Name:: ${jsonResponse['file']['name']}\n"
-            "Url:: ${jsonResponse['file']['url']}\n"
-            "Path:: ${jsonResponse['file']['path']}\n");
-        log("JsonResponse:: $jsonResponse");
       }
-      log('Request URL: ${request.url}');
-      log('Request Headers: ${request.headers}');
-      log('Request Files: ${request.files}');
     } catch (e) {
       log("RESPONSE:: ${e.toString()}");
       throw "File upload failed:: ${e.toString()}";
     }
   }
-
+  // Future<void> extractThumbnail(String videoPath) async {
+  //   final FlutterFFmpeg ffmpeg = FlutterFFmpeg();
+  //
+  //   // Generate a temporary thumbnail file from the video
+  //   final String thumbnailPath = '${Directory.systemTemp.path}/thumbnail.jpg';
+  //
+  //   // Use ffmpeg to extract the thumbnail (you can adjust the parameters as needed)
+  //   await ffmpeg.execute('-i $videoPath -ss 00:00:01.000 -vframes 1 $thumbnailPath');
+  //
+  //   log("Thumbnail generated at: $thumbnailPath");
+  //
+  //   // Save the thumbnail URL (locally or elsewhere)
+  //   uploadedThumbnailUrl = thumbnailPath;  // Set the local path of the thumbnail
+  //
+  //   log("Thumbnail saved locally at: $uploadedThumbnailUrl");
+  //
+  //   // You can now upload the thumbnail to another server or use it locally
+  // }
 
   Future<String> uploadFileThrough(String filePath) async {
     log('File path is :: $filePath');
@@ -776,6 +782,7 @@ class ActionProvider extends ChangeNotifier {
       log('Failed to log out: $error');
     }
   }
+
   void deleteUser() async{
     try {
       await FirebaseFirestore.instance
@@ -939,7 +946,6 @@ class ActionProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
-
 
 
 }

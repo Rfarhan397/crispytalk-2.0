@@ -1,34 +1,38 @@
+import 'dart:developer';
+
 import 'package:crispy/model/res/components/app_back_button.dart';
 import 'package:crispy/model/res/constant/app_assets.dart';
 import 'package:crispy/model/services/enum/toastType.dart';
+import 'package:crispy/provider/current_user/current_user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:sizer/sizer.dart';
 import 'package:video_player/video_player.dart';
 import 'package:get/get.dart';
-import '../../constant.dart';
-import '../../model/res/components/commentBottomSheet.dart';
-import '../../model/res/constant/app_icons.dart';
-import '../../model/res/widgets/app_text.dart.dart';
-import '../../model/res/widgets/cachedImage/cachedImage.dart';
-import '../../provider/action/action_provider.dart';
-import '../myProfile/otherUserProfile/otherUserProfile.dart';
+import '../../../constant.dart';
+import '../../../model/res/components/commentBottomSheet.dart';
+import '../../../model/res/constant/app_icons.dart';
+import '../../../model/res/widgets/app_text.dart.dart';
+import '../../../model/res/widgets/cachedImage/cachedImage.dart';
+import '../../../provider/action/action_provider.dart';
+import '../../myProfile/otherUserProfile/otherUserProfile.dart';
 
-class VideoFeedScreen extends StatefulWidget {
+class Allvideolistwidget extends StatefulWidget {
   final int initialIndex;
 
-  const VideoFeedScreen({
+  const Allvideolistwidget({
     super.key,
     required this.initialIndex,
   });
 
   @override
-  State<VideoFeedScreen> createState() => _VideoFeedScreenState();
+  State<Allvideolistwidget> createState() => _AllvideolistwidgetState();
 }
 
-class _VideoFeedScreenState extends State<VideoFeedScreen> {
+class _AllvideolistwidgetState extends State<Allvideolistwidget> {
   late PageController _pageController;
   late List<VideoPlayerController> _controllers;
   int _currentIndex = 0;
@@ -42,7 +46,7 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
     // Initialize controllers for current, previous and next videos
     _controllers = List.generate(
       context.read<ActionProvider>().posts.length,
-      (index) => VideoPlayerController.network(
+          (index) => VideoPlayerController.network(
           customLink + context.read<ActionProvider>().posts[index].mediaUrl)
         ..initialize().then((_) {
           if (index == _currentIndex) {
@@ -74,6 +78,7 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currentUserProvider = Provider.of<CurrentUserProvider>(context, listen: false);
     final actionP = Provider.of<ActionProvider>(context);
     return Scaffold(
       backgroundColor: Colors.black,
@@ -89,32 +94,19 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
             children: [
               GestureDetector(
                 onTap: () {
-                  if (post.mediaType == 'mp4') {
-                    if (_controllers[index].value.isPlaying) {
-                      _controllers[index].pause();
-                    } else {
-                      _controllers[index].play();
-                    }
+                  if (_controllers[index].value.isPlaying) {
+                    _controllers[index].pause();
+                  } else {
+                    _controllers[index].play();
                   }
                   setState(() {});
                 },
-                child: Center(
-                  child: post.mediaType == 'mp4'
-                      ? _controllers[index].value.isInitialized
-                      ? AspectRatio(
-                    aspectRatio: _controllers[index].value.aspectRatio,
-                    child: VideoPlayer(_controllers[index]),
-                  )
-                      : const Center(
-                    child: CircularProgressIndicator(),
-                  )
-                      : CachedShimmerImageWidget(
-                    imageUrl: "$customLink${post.mediaUrl}",
-                    fit: BoxFit.contain,
-                  ),
-                ),
+                child: post.mediaType == 'mp4'
+                    ? VideoPlayer(_controllers[index])
+                    : CachedShimmerImageWidget(
+                    imageUrl:  "$customLink${post.mediaUrl}",
+                    fit: BoxFit.cover),
               ),
-
               // User Info Overlay
               Positioned(
                 top: 4.h,
@@ -146,7 +138,8 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                                 borderRadius: BorderRadius.circular(100),
                                 child: post.userDetails!.profileUrl.isNotEmpty
                                     ? CachedShimmerImageWidget(
-                                        imageUrl: "$customLink${post.userDetails?.profileUrl}")
+                                    imageUrl:
+                                    "$customLink${post.userDetails?.profileUrl}")
                                     : Image.asset(AppAssets.noProfile)),
                           ),
                         ],
@@ -158,7 +151,16 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                         return GestureDetector(
                           onTap: () {
                             if (post.userDetails?.fcmToken != null) {
+
                               actionP.toggleListCheck(index,type: ToggleType.like);
+                              // Provider.of<ActionProvider>(context, listen: false)
+                              //     .toggleLike(
+                              //   post.timeStamp,
+                              //   post.likes,
+                              // );
+
+
+
                             }
                           },
                           child: Column(
@@ -190,8 +192,6 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                           isScrollControlled: true,
                           isDismissible: true,
                           enableDrag: true,
-                          ignoreSafeArea: false,
-
                         );
                       },
                       child: Column(
@@ -275,20 +275,20 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
               // Video Progress Bar
               post.mediaType == 'mp4'
                   ? Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: VideoProgressIndicator(
-                        _controllers[index],
-                        allowScrubbing: true,
-                        colors: const VideoProgressColors(
-                          playedColor: primaryColor,
-                          bufferedColor: Colors.grey,
-                          backgroundColor: Colors.white,
-                        ),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: VideoProgressIndicator(
+                  _controllers[index],
+                  allowScrubbing: true,
+                  colors: const VideoProgressColors(
+                    playedColor: primaryColor,
+                    bufferedColor: Colors.grey,
+                    backgroundColor: Colors.white,
+                  ),
+                ),
+              )
+                  : SizedBox.shrink(),
             ],
           );
         },

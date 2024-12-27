@@ -1,10 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crispy/constant.dart';
 import 'package:crispy/model/res/components/fullImagePreview.dart';
+import 'package:crispy/provider/stream/streamProvider.dart';
+import 'package:crispy/screens/sampleVideo/tiktokVIdeoPlayer.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:provider/provider.dart';
 
+import '../../../provider/action/action_provider.dart';
 import '../../../screens/myProfile/userProfile.dart';
 import '../../../screens/video/mediaViewerScreen.dart';
 import '../../mediaPost/mediaPost_model.dart';
@@ -17,40 +21,35 @@ class MediaWrap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('posts')
-          .where('userUid', isEqualTo: userUid)
-          .snapshots(),
+    return StreamBuilder<List<MediaPost>>(
+      stream: StreamDataProvider().getSinglePostsWithUserDetails(),
       builder: (context, snapshot) {
         final post = snapshot.data ?? [];
+
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(child: Text("No media uploaded yet."));
         }
 
-        final mediaList = snapshot.data!.docs
-            .map((doc) => MediaPost.fromMap(doc.data() as Map<String, dynamic>))
-            .toList();
+
         return Padding(
           padding: const EdgeInsets.all(8.0),
           child: Wrap(
             alignment: WrapAlignment.start,
             spacing: 5,
             runSpacing: 20,
-            children: mediaList.map((media) {
+            children: post.map((media) {
               return GestureDetector(
                 onTap: () {
-                  if (media.mediaType =='mp4') {
+                    context.read<ActionProvider>().saveModel(post);
+                    final index= post.indexOf(media);
                     Get.to(
-                            VideoPlayerScreen(videoUrl: customLink+media.mediaUrl),
+                      // VideoPlayerScreen(videoUrl: customLink+media.mediaUrl),
+                    VideoFeedScreen(initialIndex: index),
                     );
-                  }else{
-                   Get.to(FullImagePreview(image: customLink+media.mediaUrl));
-                  }
                 },
                 child: Container(
                   height: 200,

@@ -79,10 +79,10 @@ class VideoWidgetState extends State<VideoWidget> {
         if (_controller.value.isInitialized)
         // Use a Container to define the size
           Container(
-            width: double.infinity,  // Define the width of the container
-            height: double.infinity, // Define the height of the container
+            width: double.infinity,
+            height: double.infinity,
             child: FittedBox(
-              fit: BoxFit.cover, // Ensure the video fits and fills the container
+              fit: BoxFit.cover,
               child: SizedBox(
                 width: _controller.value.size?.width ?? 0,  // Ensure proper sizing
                 height: _controller.value.size?.height ?? 0, // Ensure proper sizing

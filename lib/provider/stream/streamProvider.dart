@@ -109,6 +109,7 @@ class StreamDataProvider extends ChangeNotifier {
           }
 
           // Fetch user details in batches
+
           List<Map<String, dynamic>> usersData = [];
           for (int i = 0; i < postUserIds.length; i += 10) {
             final batchIds = postUserIds.toList().sublist(
@@ -155,6 +156,35 @@ class StreamDataProvider extends ChangeNotifier {
       print('Error in getPostsWithUserDetails: $e');
       yield [];
     }
+  }
+  //fetch postsWithUserDetails from firebase
+  Stream<List<MediaPost>> getSinglePostsWithUserDetails() {
+    return FirebaseFirestore.instance
+        .collection('posts')
+    .where('userUid',isEqualTo: currentUser)
+        .snapshots()
+        .asyncMap((querySnapshot) async {
+      List<MediaPost> posts = [];
+
+      for (var doc in querySnapshot.docs) {
+        final post = MediaPost.fromMap(doc.data());
+
+        // Fetch user details
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(post.userUid)
+            .get();
+
+        if (userDoc.exists) {
+          final userDetails = UserModelT.fromMap(userDoc.data()!);
+          post.userDetails = userDetails;
+        }
+
+        posts.add(post);
+      }
+
+      return posts;
+    });
   }
 
   Stream<List<UserModelT>> getBlockedUsers(String userID) async* {

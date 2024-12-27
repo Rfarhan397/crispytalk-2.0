@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:sizer/sizer.dart';
-
 import '../../../constant.dart';
 import '../../../provider/action/action_provider.dart';
 import '../../../provider/current_user/current_user_provider.dart';
@@ -17,18 +16,19 @@ import '../widgets/customDialog.dart';
 
 class CommentBottomSheet extends StatelessWidget {
   final String postId, token, postOwnerUid;
-   CommentBottomSheet({super.key,
+   CommentBottomSheet({
+     super.key,
     required this.postId,
     required this.token,
-    required this.postOwnerUid});
+    required this.postOwnerUid,
+   });
 
   final TextEditingController commentController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     final action = Provider.of<ActionProvider>(context, listen: false);
-    final currentUserProvider =
-        Provider.of<CurrentUserProvider>(context, listen: false).currentUser;
+    final currentUserProvider = Provider.of<CurrentUserProvider>(context, listen: false).currentUser;
     return DraggableScrollableSheet(
       initialChildSize: 0.6,
       minChildSize: 0.3,

@@ -8,7 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../model/res/constant/app_assets.dart';
 import '../../model/user_model/user_model.dart';
 
-class UserProvider with ChangeNotifier {
+class UserProvider with ChangeNotifier{
   List<UserModel> _users = [
     UserModel(
         id: '1',
@@ -122,11 +122,7 @@ class UserProvider with ChangeNotifier {
     _selectedUsers.removeWhere((selectedUser) => selectedUser.id == user.userUid); // Remove from selected list
     notifyListeners(); // Notify the UI to update
   }
-
-
-
 }
-
 
 class UserProvider2 with ChangeNotifier {
   List<UserModelT> selectedUsers = [];
@@ -286,4 +282,6 @@ class SearchProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+
 }

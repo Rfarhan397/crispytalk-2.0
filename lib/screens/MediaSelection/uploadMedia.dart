@@ -51,6 +51,7 @@ class UploadMediaScreen extends StatelessWidget {
         children: [
           SizedBox(height: 5.h),
           TextField(
+            cursorColor: primaryColor,
             maxLength: 90,
             controller: titleController,
             decoration: InputDecoration(
@@ -60,6 +61,12 @@ class UploadMediaScreen extends StatelessWidget {
                 fontSize: 16,
                 color: greyColor,
                 fontWeight: FontWeight.w600,
+              ),
+              focusedBorder: const UnderlineInputBorder(
+                borderSide: BorderSide(color: primaryColor),
+              ),
+              enabledBorder: const UnderlineInputBorder(
+                borderSide: BorderSide(color: primaryColor),
               ),
             ),
           ),
@@ -184,6 +191,7 @@ class UploadMediaScreen extends StatelessWidget {
       // await cloudinaryProvider.uploadMedia(mediaData, mediaType);
       await provider.uploadFile();
       String? mediaUrl = provider.uploadedMediaName;
+
 
       if (mediaUrl == null || mediaUrl.isEmpty) {
         throw Exception('Media upload failed');

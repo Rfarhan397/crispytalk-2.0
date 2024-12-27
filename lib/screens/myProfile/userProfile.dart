@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crispy/model/res/constant/app_utils.dart';
 import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
 import 'package:crispy/provider/mediaPost/media_post_provider.dart';
+import 'package:crispy/screens/sampleVideo/tiktokVIdeoPlayer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -39,7 +40,7 @@ class UserProfile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final menuProvider = Provider.of<ActionProvider>(context);
+    final action = Provider.of<ActionProvider>(context,listen: false);
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: Colors.white,
@@ -54,9 +55,9 @@ class UserProfile extends StatelessWidget {
             child: PopupMenuButton<String>(
               color: primaryColor,
               icon: SvgPicture.asset(AppIcons.menu),
-              onSelected: (value) {
-                menuProvider.setSelectedItem(value);
+              onSelected: (value) async {
 
+                action.setSelectedItem(value);
                 // Handle the navigation after selection
                 if (value == 'Setting') {
                   log('Setting selected');
@@ -65,7 +66,7 @@ class UserProfile extends StatelessWidget {
                   log('Notification selected');
                   Get.toNamed(RoutesName.notificationScreen);
                 } else if (value == 'Log Out') {
-                  menuProvider.logout();
+                 await action.logout();
                   log('Log Out selected');
                   // onTap here
                 }
@@ -73,11 +74,11 @@ class UserProfile extends StatelessWidget {
               itemBuilder: (BuildContext context) {
                 return [
                   buildMenuItem(
-                      context, 'Setting', AppIcons.setting, menuProvider),
+                      context, 'Setting', AppIcons.setting, action),
                   buildMenuItem(context, 'Notification', AppIcons.notification,
-                      menuProvider),
+                      action),
                   buildMenuItem(
-                      context, 'Log Out', AppIcons.exit, menuProvider),
+                      context, 'Log Out', AppIcons.exit, action),
                 ];
               },
             ),
@@ -239,17 +240,16 @@ class UserProfileCurrentUser extends StatelessWidget {
                                 padding: const EdgeInsets.all(8.0),
                                 child: Wrap(
                                   alignment: WrapAlignment.start,
-                                  spacing: 10,
+                                  spacing: 5,
                                   runSpacing: 20,
                                   children: savedPostsProvider.savedPosts
                                       .map((media) {
                                     return GestureDetector(
                                       onTap: () {
+                                        context.read<ActionProvider>().saveModel(savedPostsProvider.savedPosts);
+                                      final index =   savedPostsProvider.savedPosts.indexOf(media);
                                         Get.to(
-                                            // VideoPlayerScreen(
-                                            //   videoUrl: customLink+media.mediaUrl,
-                                            // )
-                                            SingleVideoPlayerScreen(media: media)
+                                            VideoFeedScreen(initialIndex: index),
                                         );
                                       },
                                       child: Container(
