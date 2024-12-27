@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -194,7 +195,7 @@ class FCMService {
   void _handleNotificationResponse(NotificationResponse response) {
     if (response.payload != null) {
       final Map<String, dynamic> data = jsonDecode(response.payload!);
-
+      log('kuch');
       // Use handleMessage for consistent navigation
       handleMessage(RemoteMessage(data: data));
     }

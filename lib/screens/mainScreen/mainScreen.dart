@@ -25,7 +25,7 @@ class MainScreen extends StatelessWidget {
             index: value.currentIndex,
             children: [
               HomeScreen(),
-              VideoScreen(index: 0,),
+              VideoScreen(),
               TabViewScreen(),
               UserProfile(),
             ],

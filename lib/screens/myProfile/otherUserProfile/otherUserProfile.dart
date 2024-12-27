@@ -172,8 +172,8 @@ class UserProfileOtherUser extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        ProfileBackgroundImage(profileUrl: userModel.bgUrl),
-        ProfileImage(profileUrl: userModel.profileUrl),
+        ProfileBackgroundImage(profileUrl: customLink+userModel.bgUrl),
+        ProfileImage(profileUrl: customLink+userModel.profileUrl),
         Transform.translate(
           offset: Offset(0, -8.h),
           child: Padding(

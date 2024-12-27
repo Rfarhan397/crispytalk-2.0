@@ -1,4 +1,8 @@
+import 'dart:developer';
+
 import 'package:crispy/model/res/components/app_back_button.dart';
+import 'package:crispy/model/res/constant/app_assets.dart';
+import 'package:crispy/model/services/enum/toastType.dart';
 import 'package:crispy/provider/current_user/current_user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -21,12 +25,10 @@ import '../../provider/stream/streamProvider.dart';
 import '../myProfile/otherUserProfile/otherUserProfile.dart';
 
 class VideoFeedScreen extends StatefulWidget {
-  final List<MediaPost> posts;
   final int initialIndex;
 
   const VideoFeedScreen({
     super.key,
-    required this.posts,
     required this.initialIndex,
   });
 
@@ -47,8 +49,9 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
 
     // Initialize controllers for current, previous and next videos
     _controllers = List.generate(
-      widget.posts.length,
-      (index) => VideoPlayerController.network(widget.posts[index].mediaUrl)
+      context.read<ActionProvider>().posts.length,
+      (index) => VideoPlayerController.network(
+          customLink + context.read<ActionProvider>().posts[index].mediaUrl)
         ..initialize().then((_) {
           if (index == _currentIndex) {
             _controllers[index].play();
@@ -79,17 +82,17 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUserProvider =
-        Provider.of<CurrentUserProvider>(context, listen: false);
+    final currentUserProvider = Provider.of<CurrentUserProvider>(context, listen: false);
+    final actionP = Provider.of<ActionProvider>(context);
     return Scaffold(
       backgroundColor: Colors.black,
       body: PageView.builder(
         controller: _pageController,
         scrollDirection: Axis.vertical,
-        itemCount: widget.posts.length,
+        itemCount: actionP.posts.length,
         onPageChanged: _onPageChanged,
         itemBuilder: (context, index) {
-          final post = widget.posts[index];
+          final post = actionP.posts[index];
           return Stack(
             fit: StackFit.expand,
             children: [
@@ -102,15 +105,17 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                   }
                   setState(() {});
                 },
-                child: VideoPlayer(_controllers[index]),
+                child: post.mediaType == 'mp4'
+                    ? VideoPlayer(_controllers[index])
+                    : CachedShimmerImageWidget(
+                     imageUrl:  "$customLink${post.mediaUrl}",
+                        fit: BoxFit.cover),
               ),
               // User Info Overlay
-              const Positioned(
-                top: 40,
-                left: 16,
-                child: Row(
-                  children: [AppBackButton()],
-                ),
+              Positioned(
+                top: 4.h,
+                left: 2.w,
+                child: const AppBackButton(),
               ),
               Positioned(
                 bottom: 8.h,
@@ -135,55 +140,58 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                             height: 40,
                             child: ClipRRect(
                                 borderRadius: BorderRadius.circular(100),
-                                child: CachedShimmerImageWidget(
-                                    imageUrl:
-                                        post.userDetails?.profileUrl ?? '')),
+                                child: post.userDetails!.profileUrl.isNotEmpty
+                                    ? CachedShimmerImageWidget(
+                                        imageUrl:
+                                            "$customLink${post.userDetails?.profileUrl}")
+                                    : Image.asset(AppAssets.noProfile)),
                           ),
                         ],
                       ),
                     ),
                     SizedBox(height: 2.h),
-                    GestureDetector(
-                      onTap: () {
-                        if (post.userDetails?.fcmToken != null) {
-                          Provider.of<ActionProvider>(context, listen: false)
-                              .toggleLike(
-                            post.timeStamp,
-                            post.likes,
-                            currentUserProvider.currentUser?.name ?? 'N/A',
-                            post.userDetails!.fcmToken,
-                            post.userUid,
-                            'Like your Post',
-                          );
-                        }
+                    Consumer<ActionProvider>(
+                      builder: (context, value, child) {
+                        return GestureDetector(
+                          onTap: () {
+                            if (post.userDetails?.fcmToken != null) {
+
+                              actionP.toggleListCheck(index,type: ToggleType.like);
+                              // Provider.of<ActionProvider>(context, listen: false)
+                              //     .toggleLike(
+                              //   post.timeStamp,
+                              //   post.likes,
+                              // );
+
+
+
+                            }
+                          },
+                          child: Column(
+                            children: [
+                              SvgPicture.asset(
+                                post.likes.contains(currentUser)
+                                    ? AppIcons.like
+                                    : AppIcons.notLike,
+                                height: 22,
+                              ),
+                              AppTextWidget(
+                                text: post.likes.length.toString(),
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
+                        );
                       },
-                      child: Column(
-                        children: [
-                          SvgPicture.asset(
-                            Provider.of<ActionProvider>(context).isPostLiked(
-                              post.timeStamp,
-                              post.likes,
-                            )
-                                ? AppIcons.like
-                                : AppIcons.notLike,
-                            height: 22,
-                          ),
-                          AppTextWidget(
-                            text: post.likes.length.toString(),
-                            color: Colors.white,
-                          ),
-                        ],
-                      ),
                     ),
                     const SizedBox(height: 20),
                     GestureDetector(
                       onTap: () {
                         Get.bottomSheet(
                           CommentBottomSheet(
-                          postId:   post.timeStamp,
-                           token:  post.userDetails!.fcmToken,
-                           currentUserName:  currentUserProvider.currentUser!.name,
-                           postOwnerUid:  post.userUid,
+                            postId: post.timeStamp,
+                            token: post.userDetails!.fcmToken,
+                            postOwnerUid: post.userUid,
                           ),
                           isScrollControlled: true,
                           isDismissible: true,
@@ -204,7 +212,7 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                     // Share Icon
                     GestureDetector(
                       onTap: () {
-                        shareVideo(post.mediaUrl.toString());
+                        shareVideo(customLink + post.mediaUrl.toString());
                       },
                       child: Column(
                         children: [
@@ -220,18 +228,15 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
                     // Favorite Icon
                     GestureDetector(
                       onTap: () {
-                        Provider.of<ActionProvider>(context, listen: false)
-                            .toggleSave(post.timeStamp, post.saves);
+                        actionP.toggleListCheck(index,type: ToggleType.save);
                       },
                       child: Column(
                         children: [
                           SvgPicture.asset(
-                            Provider.of<ActionProvider>(context)
-                                    .isPostSaved(post.timeStamp, post.saves)
+                            post.saves.contains(currentUser)
                                 ? AppIcons.saveP
                                 : AppIcons.save,
                             height: 22,
@@ -243,6 +248,7 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                         ],
                       ),
                     ),
+
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -271,26 +277,29 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                 ),
               ),
               // Video Progress Bar
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: VideoProgressIndicator(
-                  _controllers[index],
-                  allowScrubbing: true,
-                  colors: const VideoProgressColors(
-                    playedColor: primaryColor,
-                    bufferedColor: Colors.grey,
-                    backgroundColor: Colors.white,
-                  ),
-                ),
-              ),
+              post.mediaType == 'mp4'
+                  ? Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: VideoProgressIndicator(
+                        _controllers[index],
+                        allowScrubbing: true,
+                        colors: const VideoProgressColors(
+                          playedColor: primaryColor,
+                          bufferedColor: Colors.grey,
+                          backgroundColor: Colors.white,
+                        ),
+                      ),
+                    )
+                  : SizedBox.shrink(),
             ],
           );
         },
       ),
     );
   }
+
   // Share function to handle sharing the video URL
   void shareVideo(String mediaUrl) {
     if (mediaUrl.isNotEmpty) {

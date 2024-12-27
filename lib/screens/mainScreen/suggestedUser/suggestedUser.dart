@@ -27,6 +27,16 @@ class _SuggestedUsersState extends State<SuggestedUsers> {
   bool isSuggestionVisible = true;
 
   @override
+  void initState() {
+    super.initState();
+    // Fetch suggested users when the widget initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<SuggestedUsersProvider>(context, listen: false)
+          .fetchSuggestedUsers(widget.currentUserId);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

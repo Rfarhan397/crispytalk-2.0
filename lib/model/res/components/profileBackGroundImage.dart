@@ -1,3 +1,4 @@
+import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
@@ -19,7 +20,7 @@ class ProfileBackgroundImage extends StatelessWidget {
           bottomRight: Radius.circular(20),
         ),
         child: profileUrl.toString().isNotEmpty
-            ? Image.network(profileUrl.toString(), fit: BoxFit.cover)
+            ? CachedShimmerImageWidget(imageUrl: profileUrl.toString(), fit: BoxFit.cover)
             : Image.asset(AppAssets.noImage, fit: BoxFit.cover),
       ),
     );

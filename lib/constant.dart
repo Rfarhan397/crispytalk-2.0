@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:share_plus/share_plus.dart';
 
 
 const primaryColor = Color(0xFFFC9025);
@@ -28,6 +29,8 @@ final GoogleSignIn googleSignIn = GoogleSignIn();
 String currentUser = FirebaseAuth.instance.currentUser!.uid;
 String timestampId = DateTime.now().millisecondsSinceEpoch.toString();
 
+String customLink = 'https://solinovation.finegap.com/uploads/';
+
 String generateRandomId() {
   final random = Random();
 
@@ -39,7 +42,11 @@ String generateRandomId() {
 
 
 
-
+void shareVideo(String mediaUrl) {
+  if (mediaUrl.isNotEmpty) {
+    Share.share(mediaUrl, subject: "Check out this video!");
+  }
+}
 
 LinearGradient gradientColor = const LinearGradient(colors: [
   Color(0xffFF5000),

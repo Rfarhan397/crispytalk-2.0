@@ -1,5 +1,7 @@
 import 'dart:developer';
+import 'package:crispy/model/res/constant/app_assets.dart';
 import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
+import 'package:crispy/provider/action/action_provider.dart';
 import 'package:crispy/screens/mainScreen/suggestedUser/suggestedUser.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -26,11 +28,32 @@ import '../sampleVideo/tiktokVIdeoPlayer.dart';
 import '../video/videoScreen.dart';
 import '../video/videoWidget.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   HomeScreen({super.key});
 
-  final GlobalKey<VideoWidgetState> videoKey =
-      GlobalKey<VideoWidgetState>(); // Specify type here
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final GlobalKey<VideoWidgetState> videoKey = GlobalKey<VideoWidgetState>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize posts cache when home screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<PostCacheProvider>().initializePosts();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // Remove clearCache call from here
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,13 +81,13 @@ class HomeScreen extends StatelessWidget {
               onTap: () {
                 showSearch(
                   context: context,
-                  delegate: CustomSearchDelegate(userStream: StreamDataProvider().getUsers()),
+                  delegate: CustomSearchDelegate(
+                      userStream: StreamDataProvider().getUsers()),
                 );
               },
               child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 3.w),
                   child: SvgPicture.asset(AppIcons.search))),
-
         ],
       ),
       body: Padding(
@@ -85,7 +108,8 @@ class HomeScreen extends StatelessWidget {
                   ),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      final cachedData = context.watch<PostCacheProvider>().cachedPosts;
+                      final cachedData =
+                          context.watch<PostCacheProvider>().cachedPosts;
                       if (cachedData != null) {
                         return buildPostsList(cachedData);
                       }
@@ -100,7 +124,8 @@ class HomeScreen extends StatelessWidget {
 
                     final posts = snapshot.data ?? [];
 
-                    posts.sort((a, b) => b.likes.length.compareTo(a.likes.length));
+                    posts.sort(
+                        (a, b) => b.likes.length.compareTo(a.likes.length));
 
                     return ListView.builder(
                       scrollDirection: Axis.horizontal,
@@ -109,7 +134,8 @@ class HomeScreen extends StatelessWidget {
                         final postData = posts[index];
                         final profileImage = postData.userDetails?.profileUrl;
                         final userName =
-                            postData.userDetails?.name.capitalizeFirst ?? 'Unknown User';
+                            postData.userDetails?.name.capitalizeFirst ??
+                                'Unknown User';
                         final mediaUrl = postData.mediaUrl ?? '';
                         final mediaType = postData.mediaType ?? '';
 
@@ -118,19 +144,17 @@ class HomeScreen extends StatelessWidget {
                           child: buildPhotoCard(
                             profileImage: profileImage.toString(),
                             userName: userName,
-                            mediaUrl: mediaUrl,
+                            mediaUrl: customLink + mediaUrl,
                             mediaType: mediaType,
                             onTap: () {
                               // Get.toNamed(
                               //   RoutesName.video,
                               //   arguments: {'videoUrl': mediaUrl},
                               // );
-                              Get.to(() => FullScreenVideoPlayer(
-                                videoUrl: mediaUrl,
-                                userName: userName,
-                                profileImage: profileImage.toString(),
-                              ));
-
+                              context.read<ActionProvider>().saveModel(posts);
+                              Get.to(() => VideoFeedScreen(
+                                    initialIndex: index,
+                                  ));
                             },
                           ),
                         );
@@ -152,23 +176,31 @@ class HomeScreen extends StatelessWidget {
                   includeCurrentUser: false,
                 ),
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    final cachedData = context.watch<PostCacheProvider>().cachedPosts;
+                  final posts = List<MediaPost>.from(snapshot.data ?? []);
+
+                  if (snapshot.connectionState == ConnectionState.waiting ||
+                      snapshot.hasError) {
+                    final cachedData =
+                        context.watch<PostCacheProvider>().cachedPosts;
                     if (cachedData != null) {
-                      return buildVerticalPostsList(cachedData);
+                      return buildVerticalPostsList(posts);
                     }
                     return const PostShimmerWidget();
                   }
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  }
+
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    final cachedData =
+                        context.watch<PostCacheProvider>().cachedPosts;
+                    if (cachedData != null) {
+                      return buildVerticalPostsList(posts);
+                    }
                     return const Center(child: Text('No posts available'));
                   }
-                  final posts = snapshot.data ?? [];
-
-                  // Store posts in cache
-                  context.read<PostCacheProvider>().setCachedPosts(posts);
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (context.mounted) {
+                      context.read<PostCacheProvider>().setCachedPosts(posts);
+                    }
+                  });
 
                   return buildVerticalPostsList(posts);
                 },
@@ -188,53 +220,39 @@ class HomeScreen extends StatelessWidget {
       itemCount: post.length,
       itemBuilder: (context, index) {
         final postData = post[index];
-        String mediaType = '';
-        if (postData.mediaUrl.endsWith('.jpg') ||
-            postData.mediaUrl.endsWith('.jpeg')) {
-          mediaType = 'jpg';
-        } else if (postData.mediaUrl.endsWith('.png')) {
-          mediaType = 'png';
-        } else if (postData.mediaUrl.endsWith('.mov') ||
-            postData.mediaUrl.endsWith('.avi') ||
-            postData.mediaUrl.endsWith('.mp4')) {
-          mediaType = 'video';
-        }
-        final isLiked = postData.likes.contains(currentUser);
-
         return Padding(
           padding: EdgeInsets.only(right: 3.w),
           child: buildPostContainer(
             () {
-              Get.to(OtherUserProfile(userID: postData.userUid,userName: postData.userDetails!.name));
+              Get.to(OtherUserProfile(
+                  userID: postData.userUid,
+                  userName: postData.userDetails!.name));
             },
             postData.userDetails?.profileUrl ?? "",
             postData.userDetails?.name.capitalizeFirst ?? 'Unknown User',
             _formatTime(postData.timeStamp) ?? 'time',
             postData.title,
             () {
-              final isImage =
-                  postData.mediaUrl.endsWith('.jpg') ||
-                      postData.mediaUrl.endsWith('.png') ||
-                      postData.mediaUrl.endsWith('.jpeg');
-              final isVideo =
-              // = postData.mediaType == 'mp4';
-                  postData.mediaUrl.endsWith('.mp4') ||
-                      postData.mediaUrl.endsWith('.mov') ||
-                      postData.mediaUrl.endsWith('.avi');
+              final isImage = postData.mediaType == 'image';
+
+              final isVideo = postData.mediaType == 'mp4';
+
               if (isVideo) {
-                // Get.to(VideoScreen(
-                //   index: index,
-                //   imagePath: postData.userDetails!.profileUrl,
-                //   hasBackBtn: true,
-                // ));
-                Get.to(VideoFeedScreen(
-                  posts: post,
+                log('the video is already available ${customLink + postData.mediaUrl}');
+                context.read<ActionProvider>().saveModel(post);
+                Get.to(
+                    VideoFeedScreen(
                   initialIndex: index,
-                ));
+                ),
+                );
+
+
+
+
               }
+
               if (isImage) {
-                Get.to(ImageDetailScreen(
-                    imageUrl: postData.mediaUrl));
+                Get.to(ImageDetailScreen(imageUrl: postData.mediaUrl));
               }
             },
             postData.mediaUrl,
@@ -258,7 +276,6 @@ class HomeScreen extends StatelessWidget {
       return '${now.difference(dateTime).inDays} days ago';
     }
   }
-
 
   // Build photo card widget
   Widget buildPhotoCard({
@@ -287,20 +304,16 @@ class HomeScreen extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            if (mediaType == 'jpg' || mediaType == 'png' || mediaType == 'jpeg')
+            if (mediaType == 'image')
               ClipRRect(
                 child: CachedShimmerImageWidget(
                   width: double.infinity,
-                  height: double
-                      .infinity,
-                  imageUrl:  mediaUrl,
+                  height: double.infinity,
+                  imageUrl: mediaUrl,
                   fit: BoxFit.cover,
-                // Make the image fill the entire container
                 ),
               )
-            else if (mediaType == 'mp4' ||
-                mediaType == 'mov' ||
-                mediaType == 'avi')
+            else if (mediaType == 'mp4')
               ClipRRect(
                 child: SizedBox(
                   child: VideoWidget(
@@ -338,7 +351,6 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-
                       SizedBox(width: 1.w),
                       Flexible(
                         child: AppTextWidget(
@@ -382,12 +394,14 @@ class HomeScreen extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 18,
-                 child: ClipRRect(
-                   borderRadius: BorderRadius.circular(100),
-                   child: CachedShimmerImageWidget(
-                     imageUrl: profileImage,
-                   ),
-                 ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(100),
+                    child: profileImage.isNotEmpty
+                        ? CachedShimmerImageWidget(
+                            imageUrl: profileImage,
+                          )
+                        : Image.asset(AppAssets.noProfile),
+                  ),
                 ),
                 SizedBox(width: 2.w),
                 Column(
@@ -424,25 +438,22 @@ class HomeScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 child: GestureDetector(
                   onTap: onTap,
-                  child: mediaType == 'jpg' ||
-                          mediaType == 'png' ||
-                          mediaType == 'jpeg'
+                  child: mediaType == 'image'
                       ? Image.network(
-                          video,
+                          customLink + video,
                           width: double.infinity,
                           height: 30.h,
                           fit: BoxFit.cover,
                         )
-                      : mediaType == 'mov' ||
-                              mediaType == 'avi' ||
-                              mediaType == 'mp4'
-                          ? Container(
+                      : mediaType == 'mp4'
+                          ? SizedBox(
                               // color: customGrey,
                               // height: 30.h,
                               width: double.infinity,
                               child: VideoWidget(
-                                isAutoPlay: false,
-                                mediaUrl: video,
+                                isAutoPlay: true,
+                                showPlayPauseButton: true,
+                                mediaUrl: customLink + video,
                                 onTogglePlayPause: () {
                                   videoKey.currentState?.togglePlayPause();
                                 },
@@ -542,14 +553,15 @@ class HomeScreen extends StatelessWidget {
 
   Widget buildPostsList(List<MediaPost> posts) {
     posts.sort((a, b) => b.likes.length.compareTo(a.likes.length));
-    
+
     return ListView.builder(
       scrollDirection: Axis.horizontal,
       itemCount: posts.length,
       itemBuilder: (context, index) {
         final postData = posts[index];
         final profileImage = postData.userDetails?.profileUrl;
-        final userName = postData.userDetails?.name.capitalizeFirst ?? 'Unknown User';
+        final userName =
+            postData.userDetails?.name.capitalizeFirst ?? 'Unknown User';
         final mediaUrl = postData.mediaUrl ?? '';
         final mediaType = postData.mediaType ?? '';
 
@@ -571,9 +583,7 @@ class HomeScreen extends StatelessWidget {
       },
     );
   }
-
 }
-
 
 class CustomSearchDelegate extends SearchDelegate {
   final Stream<List<UserModelT>> userStream;
@@ -641,18 +651,18 @@ class CustomSearchDelegate extends SearchDelegate {
 
             return ListTile(
               onTap: () {
-                Get.to(OtherUserProfile(
-                    userID: user.userUid,
-                    userName: user.name),
+                Get.to(
+                  OtherUserProfile(userID: user.userUid, userName: user.name),
                 );
               },
               leading: CircleAvatar(
                 radius: 25,
-              child: ClipRRect(
-                  borderRadius: BorderRadius.circular(100),
-                  child: CachedShimmerImageWidget(imageUrl: user.profileUrl)),
+                child: ClipRRect(
+                    borderRadius: BorderRadius.circular(100),
+                    child: CachedShimmerImageWidget(imageUrl: user.profileUrl)),
               ),
-              title: Text(user.name , style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(user.name,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text(user.email),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             );

@@ -12,6 +12,7 @@ class SuggestedUsersProvider with ChangeNotifier {
   String? get error => _error;
 
   Future<void> fetchSuggestedUsers(String currentUserId) async {
+
     try {
       _isLoading = true;
       notifyListeners();

@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:get/get.dart' as getX;
+import 'package:get/get_core/src/get_main.dart';
 
 class VideoCallProvider with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -230,7 +231,7 @@ class VideoCallProvider with ChangeNotifier {
       isUserJoined = false;
       notifyListeners();
 
-      getX.Get.back();
+      Get.back();
     } catch (e) {
       log('Error ending the call: $e');
     }

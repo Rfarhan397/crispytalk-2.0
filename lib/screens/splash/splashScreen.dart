@@ -33,27 +33,20 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _initializeApp() async {
     try {
       final auth = FirebaseAuth.instance;
-      
-      // Run critical initialization tasks first
-      await Future.wait([
-        StreamDataProvider().updateFcmToken(),
-        Provider.of<PostCacheProvider>(context, listen: false).initializePosts(),
-      ], eagerError: true);
 
+      // Update FCM token
+      await StreamDataProvider().updateFcmToken();
+      
       // Only fetch additional data if user is logged in
       if (auth.currentUser != null) {
-        await Future.wait([
-          Provider.of<SavedPostsProvider>(context, listen: false)
-              .fetchSavedPosts(currentUser),
-          Provider.of<SuggestedUsersProvider>(context, listen: false)
-              .fetchSuggestedUsers(currentUser),
-
-        ]);
+        // Wait for saved posts to initialize
+        await Provider.of<SavedPostsProvider>(context, listen: false)
+            .fetchSavedPosts(currentUser);
       }
-
+      
       // Add a shorter timeout
       await Future.delayed(const Duration(seconds: 2));
-
+      
       // Navigation
       if (auth.currentUser != null) {
         Get.off(() => const MainScreen());
@@ -62,8 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
       }
     } catch (e) {
       log('Splash screen initialization error: $e');
-      // Handle error - navigate to login or show error dialog
-      Get.off(() =>  LoginScreen());
+      Get.off(() => LoginScreen());
     }
   }
 

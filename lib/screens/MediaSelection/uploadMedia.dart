@@ -67,8 +67,9 @@ class UploadMediaScreen extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 3.h),
             child: GestureDetector(
               onTap: () {
+                print('message');
 
-                _showPrivacySettingsBottomSheet(context);
+              //  _showPrivacySettingsBottomSheet(context);
               },
               child: _privacySettingsRow(context, provider),
             ),
@@ -80,12 +81,15 @@ class UploadMediaScreen extends StatelessWidget {
               width: 30.w,
               radius: 8,
               onClicked: () async{
-                ActionProvider.stopLoading();
+                // ActionProvider.stopLoading();
+
+                log('message');
+              // await provider.uploadFile();
                 uploadPost(
                   context,
-                  mediaData!.mediaBytes ,
-                  mediaData.mediaType,
-                  mediaData.selectedFilterIndex,
+                  // mediaData!.mediaBytes ,
+                  // mediaData.mediaType,
+                  mediaData?.selectedFilterIndex,
                 );
               },
               text: 'Post',
@@ -151,7 +155,7 @@ class UploadMediaScreen extends StatelessWidget {
     );
   }
   void uploadPost(
-      BuildContext context, Uint8List mediaData, String mediaType, int? filterIndex) async {
+      BuildContext context, int? filterIndex) async {
     final provider = Provider.of<ActionProvider>(context, listen: false);
     final cloudinaryProvider = Provider.of<CloudinaryProvider>(context, listen: false);
     final currentUser = FirebaseAuth.instance.currentUser?.uid;
@@ -177,8 +181,9 @@ class UploadMediaScreen extends StatelessWidget {
 
     try {
       // Upload media and retrieve the URL
-      await cloudinaryProvider.uploadMedia(mediaData, mediaType);
-      String? mediaUrl = cloudinaryProvider.mediaUrl;
+      // await cloudinaryProvider.uploadMedia(mediaData, mediaType);
+      await provider.uploadFile();
+      String? mediaUrl = provider.uploadedMediaName;
 
       if (mediaUrl == null || mediaUrl.isEmpty) {
         throw Exception('Media upload failed');
@@ -192,7 +197,7 @@ class UploadMediaScreen extends StatelessWidget {
         'title': titleController.text,
         'audience': provider.selectedOption,
         'mediaUrl': mediaUrl,
-        'mediaType': mediaType,
+        'mediaType': provider.uploadedMediaTypee,
         'likes': [],
         'saved': [],
         'userUid': currentUser,
@@ -200,6 +205,7 @@ class UploadMediaScreen extends StatelessWidget {
 
       ActionProvider.stopLoading();
       cloudinaryProvider.clearMedia();
+      provider.clearUploadedMediaUrl();
       titleController.clear();
       AppUtils().showToast(text: 'Data uploaded successfully');
        Get.toNamed(RoutesName.mainScreen);

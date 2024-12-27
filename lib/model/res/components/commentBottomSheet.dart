@@ -16,11 +16,10 @@ import '../widgets/cachedImage/cachedImage.dart';
 import '../widgets/customDialog.dart';
 
 class CommentBottomSheet extends StatelessWidget {
-  final String postId, token, currentUserName, postOwnerUid;
+  final String postId, token, postOwnerUid;
    CommentBottomSheet({super.key,
     required this.postId,
     required this.token,
-    required this.currentUserName,
     required this.postOwnerUid});
 
   final TextEditingController commentController = TextEditingController();
@@ -213,7 +212,7 @@ class CommentBottomSheet extends StatelessWidget {
                                     postId,
                                     commentController.text,
                                     token,
-                                    currentUserName,
+                                    currentUserProvider!.name.toString(),
                                     postOwnerUid,
                                     'commented on your video');
                                 commentController.clear();

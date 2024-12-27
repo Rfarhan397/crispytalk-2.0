@@ -52,7 +52,11 @@ class ChatTileScreen extends StatelessWidget {
         return ListTile(
           splashColor: const Color(0xffFEE3C8),
           onTap: () {
-
+            log('chat list screen is :: $chatId');
+            log('chat list screen is :: $username');
+            log('chat list screen is :: $profileImage');
+            log('chat list screen is :: $userStatus');
+            log('chat list screen is :: $fcmToken');
             chat.getChatID(
                 friendId: chatId,
                 context: context,

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
@@ -51,6 +53,7 @@ class OtherActionButton extends StatelessWidget {
   }
 
   void _handleMessagePress(ChatProvider chat, BuildContext context) {
+    log('friendId ${postData.userUid}');
     chat.getChatID(
         friendId: postData.userUid,
         context: context,

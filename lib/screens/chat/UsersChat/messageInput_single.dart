@@ -89,12 +89,15 @@ class _MessageInputFieldSingleState extends State<MessageInputFieldSingle> {
                       chatId: widget.chatId,
                       message: widget.controller.text.trim(),
                     );
+                    log('messgae input screen :: ${widget.chatId}');
+                    log('messgae input screen :: ${widget.controller.text.trim()}');
                     FCMService().sendNotification(
                         widget.token,
                         'New Notification from CrispyTalk',
                         'You received a message! Click to check',
                         currentUser,
                     );
+                    log('messgae input screen :: ${widget.token}');
                     widget.controller.clear();
                   } else {
                     if(!chat.isRecording){

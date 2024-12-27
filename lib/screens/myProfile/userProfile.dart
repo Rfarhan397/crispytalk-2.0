@@ -31,6 +31,7 @@ import '../../provider/current_user/current_user_provider.dart';
 import '../../provider/savedPost/savedPostProvider.dart';
 import '../ImageDetail/image_detail.dart';
 import '../video/mediaViewerScreen.dart';
+import '../video/singleVideo/singleVideoPlayer.dart';
 import '../video/videoScreen.dart';
 
 class UserProfile extends StatelessWidget {
@@ -152,8 +153,8 @@ class UserProfileCurrentUser extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        ProfileBackgroundImage(profileUrl: userData.bgUrl),
-        ProfileImage(profileUrl: userData.profileUrl),
+        ProfileBackgroundImage(profileUrl: customLink+userData.bgUrl),
+        ProfileImage(profileUrl: customLink+userData.profileUrl),
         Transform.translate(
           offset: Offset(0, -7.h),
           child: Column(
@@ -242,20 +243,14 @@ class UserProfileCurrentUser extends StatelessWidget {
                                   runSpacing: 20,
                                   children: savedPostsProvider.savedPosts
                                       .map((media) {
-                                    final mediaType =
-                                        determineMediaType(media.mediaUrl);
                                     return GestureDetector(
                                       onTap: () {
-                                        if (media.mediaUrl.isNotEmpty) {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  VideoScreen(
-                                                       imagePath: media.mediaUrl),
-                                            ),
-                                          );
-                                        }
+                                        Get.to(
+                                            // VideoPlayerScreen(
+                                            //   videoUrl: customLink+media.mediaUrl,
+                                            // )
+                                            SingleVideoPlayerScreen(media: media)
+                                        );
                                       },
                                       child: Container(
                                         height: 200,
@@ -271,12 +266,12 @@ class UserProfileCurrentUser extends StatelessWidget {
                                         child: ClipRRect(
                                           borderRadius:
                                               BorderRadius.circular(15),
-                                          child: mediaType == "image"
+                                          child: media.mediaType == "image"
                                               ? CachedShimmerImageWidget(
-                                                  imageUrl: media.mediaUrl)
+                                                  imageUrl: customLink+media.mediaUrl)
                                               :
                                           VideoThumbnail(
-                                                  videoUrl: media.mediaUrl),
+                                                  videoUrl: customLink+media.mediaUrl),
                                         ),
                                       ),
                                     );

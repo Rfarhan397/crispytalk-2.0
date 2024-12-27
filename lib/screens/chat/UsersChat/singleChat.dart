@@ -61,7 +61,7 @@ class ChatScreen extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(100),
-              child: CachedShimmerImageWidget(imageUrl: image),
+              child: image.isNotEmpty ? CachedShimmerImageWidget(imageUrl: image):Image.asset(AppAssets.noProfile),
             ),
           ),
           title: AppTextWidget(
@@ -78,6 +78,7 @@ class ChatScreen extends StatelessWidget {
         actions: [
           GestureDetector(
               onTap: () {
+                log('click video icon');
                 audioCall(context);
               },
               child: SvgPicture.asset(AppIcons.call, height: 18)),
@@ -223,7 +224,7 @@ class ChatScreen extends StatelessWidget {
 
   void audioCall(context) async {
     final id = generateRandomId();
-    final user = Provider.of<CurrentUserProvider>(context,listen: false).currentUser;
+    final  user = Provider.of<CurrentUserProvider>(context,listen: false).currentUser;
 
     Get.to(
       () => AudioCallScreen(
@@ -233,6 +234,7 @@ class ChatScreen extends StatelessWidget {
         callerName: user.name,
       ),
     );
+
     FCMService().sendNotification(
       fcmToken,
       'Audio Call Request',

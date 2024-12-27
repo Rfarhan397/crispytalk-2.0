@@ -72,7 +72,7 @@ class EditProfile extends StatelessWidget {
                         if (value.backgroundImage != null)
                           Image.file(value.backgroundImage!, fit: BoxFit.cover, width: double.infinity)
                         else if (userData?.bgUrl != null && userData!.bgUrl.isNotEmpty)
-                          Image.network(userData.bgUrl, fit: BoxFit.cover, width: double.infinity),
+                          Image.network(customLink+userData.bgUrl, fit: BoxFit.cover, width: double.infinity),
                         Positioned(
                           bottom: 5.h,
                           left: 25.w,
@@ -123,7 +123,7 @@ class EditProfile extends StatelessWidget {
                               child: value.profileImage != null
                                   ? Image.file(value.profileImage!, fit: BoxFit.cover, width: 100.w)
                                   : userData?.profileUrl != null && userData!.profileUrl.isNotEmpty
-                                      ? Image.network(userData.profileUrl, fit: BoxFit.cover, width: 100.w)
+                                      ? Image.network(customLink+userData.profileUrl, fit: BoxFit.cover, width: 100.w)
                                       : Padding(
                                           padding: const EdgeInsets.all(12.0),
                                           child: SvgPicture.asset(
@@ -347,21 +347,24 @@ class EditProfile extends StatelessWidget {
   void uploadProfile(BuildContext context) async {
     var profile = Provider.of<ProfileProvider>(context, listen: false);
     var currentUserProvider = Provider.of<CurrentUserProvider>(context, listen: false);
+    var action = Provider.of<ActionProvider>(context, listen: false);
     ActionProvider.startLoading();
 
     try {
       Map<String, dynamic> updateData = {};
 
       if (profile.profileImage != null) {
-        Uint8List profileImageBytes = await profile.convertFileToUint8List(profile.profileImage!);
-        await profile.uploadImage(profileImageBytes, type: "profile");
-        updateData['profileUrl'] = profile.imageUrl;
+        // Uint8List profileImageBytes = await profile.convertFileToUint8List(profile.profileImage!);
+        // await profile.uploadImage(profileImageBytes, type: "profile");
+        final profileUrl = await action.uploadFileThrough(profile.profileImage!.path.toString());
+        updateData['profileUrl'] = profileUrl;
       }
 
       if (profile.backgroundImage != null) {
-        Uint8List backgroundImageBytes = await profile.convertFileToUint8List(profile.backgroundImage!);
-        await profile.uploadImage(backgroundImageBytes, type: "background");
-        updateData['bgUrl'] = profile.imageUrl;
+        // Uint8List backgroundImageBytes = await profile.convertFileToUint8List(profile.backgroundImage!);
+        // await profile.uploadImage(backgroundImageBytes, type: "background");
+        final bgUrl = await action.uploadFileThrough(profile.backgroundImage!.path.toString());
+        updateData['bgUrl'] = bgUrl;
       }
 
       if (profile.nameController.text.trim().isNotEmpty) {
@@ -379,8 +382,6 @@ class EditProfile extends StatelessWidget {
       if (profile.fbController.text.trim().isNotEmpty) {
         updateData['facebook'] = profile.fbController.text.trim();
       }
-
-      // Always include gender in updateData
       updateData['gender'] = profile.selectedGender;
 
       if (updateData.isNotEmpty) {
@@ -392,6 +393,7 @@ class EditProfile extends StatelessWidget {
         profile.bioController.clear();
         profile.instaController.clear();
         profile.fbController.clear();
+        action.clearUploadedMediaUrl();
         Get.back(); // Navigate back to profile screen
       } else {
         AppUtils().showToast(text: 'No changes detected.');

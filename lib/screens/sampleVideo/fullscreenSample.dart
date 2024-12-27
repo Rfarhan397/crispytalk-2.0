@@ -1,3 +1,4 @@
+import 'package:crispy/constant.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:get/get.dart';
@@ -111,7 +112,7 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
               _controller,
               allowScrubbing: true,
               colors: const VideoProgressColors(
-                playedColor: Colors.red,
+                playedColor: primaryColor,
                 bufferedColor: Colors.grey,
                 backgroundColor: Colors.white,
               ),

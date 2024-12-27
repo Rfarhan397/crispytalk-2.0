@@ -33,15 +33,11 @@ class VideoScreen extends StatelessWidget {
   final TextEditingController commentController = TextEditingController();
   final GlobalKey<VideoWidgetState> videoKey = GlobalKey<VideoWidgetState>();
 
-
-  final int? index;
-  final String? imagePath;
-  final bool hasBackBtn;
-  VideoScreen({super.key, this.index, this.imagePath,this.hasBackBtn = false});
+  VideoScreen({super.key, });
 
   @override
   Widget build(BuildContext context) {
-    final PageController pageController = PageController(initialPage: index ?? 0);
+    final PageController pageController = PageController();
     return Scaffold(
       backgroundColor: Colors.black,
       body: ChangeNotifierProvider(
@@ -63,7 +59,7 @@ class VideoScreen extends StatelessWidget {
                 children: [
                   StreamBuilder(
                     stream: StreamDataProvider().getPostsWithUserDetails(
-                        audience: 'Everyone',
+                        audience: 'Friends',
                         currentUserId: currentUser,
                         includeCurrentUser: false
                     ),
@@ -82,10 +78,7 @@ class VideoScreen extends StatelessWidget {
                       }
 
                       final videoItems = videos.where((video) {
-                        final mediaUrl = video.mediaUrl.toString();
-                        final isVideo = mediaUrl.endsWith('.mp4') ||
-                            mediaUrl.endsWith('.mov') ||
-                            mediaUrl.endsWith('.avi');
+                        final isVideo = video.mediaType == 'mp4';
                         return isVideo;
                       }).toList();
 
@@ -98,13 +91,12 @@ class VideoScreen extends StatelessWidget {
                         },
                         itemBuilder: (context, index) {
                           final video = videoItems[index];
-                          final mediaUrl = video.mediaUrl.toString();
 
                           return Stack(
                             children: [
-                              Positioned.fill(
+                              Positioned(
                                 child: VideoPlayerScreen(
-                                  videoUrl: mediaUrl,
+                                  videoUrl: customLink+video.mediaUrl,
                                 ),
                               ),
                               Positioned(
@@ -145,10 +137,6 @@ class VideoScreen extends StatelessWidget {
                                           Provider.of<ActionProvider>(context, listen: false)
                                               .toggleLike(video.timeStamp,
                                             video.likes,
-                                            currentUserProvider.currentUser?.name ?? 'N/A'        ,
-                                            video.userDetails!.fcmToken,
-                                            video.userUid,
-                                            'Like your Post',
                                           );
                                         }
                                       },
@@ -180,7 +168,6 @@ class VideoScreen extends StatelessWidget {
                                           CommentBottomSheet(
                                           postId:   video.timeStamp,
                                            token:  video.userDetails!.fcmToken,
-                                           currentUserName:  currentUserProvider.currentUser!.name,
                                            postOwnerUid:  video.userUid,
 
                                           ),
@@ -278,7 +265,6 @@ class VideoScreen extends StatelessWidget {
 
                     },
                   ),
-                  hasBackBtn? Positioned(top: 5.h, left: 3.w, child: const AppBackButton()):const SizedBox.shrink(),
                   Positioned(
                     top: 7.h,
                     left: MediaQuery.of(context).size.width * 0.4,
@@ -293,9 +279,5 @@ class VideoScreen extends StatelessWidget {
     );
   }
   // Share function to handle sharing the video URL
-  void shareVideo(String mediaUrl) {
-    if (mediaUrl.isNotEmpty) {
-      Share.share(mediaUrl, subject: "Check out this video!");
-    }
-  }
+
 }

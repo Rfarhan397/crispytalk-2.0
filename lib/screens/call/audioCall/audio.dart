@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -32,6 +34,7 @@ class AudioCallScreen extends StatefulWidget {
 class _AudioCallScreenState extends State<AudioCallScreen> {
   @override
   Widget build(BuildContext context) {
+    log('audio screen :: ${widget.callId}');
     return ChangeNotifierProvider(
       create: (_) => AudioCallProvider(),
       child: Scaffold(

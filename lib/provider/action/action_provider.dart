@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crispy/core/base/end_point.dart';
 import 'package:crispy/model/services/fcm/fcm_services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,9 +13,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/snackbar/snackbar.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mime/mime.dart';
 import 'package:provider/provider.dart';
-
+import 'package:http/http.dart' as http;
 import '../../constant.dart';
 import '../../model/mediaPost/mediaPost_model.dart';
 import '../../model/res/constant/app_utils.dart';
@@ -54,6 +58,8 @@ class ActionProvider extends ChangeNotifier {
     _selectedIndex = index;
     notifyListeners();
   }
+
+
 
   void onHover(int index, bool isHovered) {
     _isHovered[index] = isHovered;
@@ -202,7 +208,7 @@ class ActionProvider extends ChangeNotifier {
   }
 
   ///////////to like and unlike the post //////
-  Future<void> likePost(String postId,token,currentUserName,postOwnerId,notificationBody) async {
+  Future<void> likePost(String postId,) async {
     final userId = auth.currentUser?.uid.toString() ?? "";
 
     if (userId.isNotEmpty) {
@@ -211,10 +217,6 @@ class ActionProvider extends ChangeNotifier {
         'likes': FieldValue.arrayUnion([userId]),
         'isLiked': true,
       });
-     _uploadNotification(
-          token,  currentUserName,  postOwnerId,  postId,notificationBody
-     );
-
     }
   }
 
@@ -243,12 +245,12 @@ class ActionProvider extends ChangeNotifier {
   }
 
   // Toggle like/unlike
-  Future<void> toggleLike(String postId, List<String> likes,String currentUserName,token,postOwnerId,notificationBody) async {
+  Future<void> toggleLike(String postId, List<String> likes,) async {
     final userId = auth.currentUser?.uid ?? "";
     if (likes.contains(userId)) {
       await unlikePost(postId);
     } else {
-      await likePost(postId,token,currentUserName,postOwnerId,notificationBody);
+      await likePost(postId,);
 
     }
     notifyListeners();
@@ -291,7 +293,7 @@ class ActionProvider extends ChangeNotifier {
   // Toggle
   Future<void> toggleSave(String postId, List<String> saved) async {
     final userId = auth.currentUser?.uid ?? "";
-    if (saved.contains(userId)) {
+    if (saved.contains(currentUser)) {
       await unSavePost(postId);
 
     } else {
@@ -300,13 +302,21 @@ class ActionProvider extends ChangeNotifier {
     notifyListeners(); // Trigger rebuild to update icon
   }
 
+
+  //new way
+  void toggleSaveNew(String timeStamp, List saves) {
+    if (saves.contains(timeStamp)) {
+      saves.remove(timeStamp);
+    } else {
+      saves.add(timeStamp);
+    }
+    // Notify listeners about the change
+    notifyListeners();
+  }
 ////////////to Follow user m firestore //////
   final FirebaseFirestore fireStore = FirebaseFirestore.instance;
 
-  final Map<String, bool> _followStatus = {};
 
-  // Check if the current user follows another user
-  // bool isFollowed(String userId) => _followStatus[userId] ?? false;
   bool isFollowed(String postId, List<String> Followed) {
     final userId = auth.currentUser?.uid ?? "";
     return Followed.contains(userId);
@@ -382,8 +392,209 @@ class ActionProvider extends ChangeNotifier {
     return _selectedOption == option;
   }
 
-  Uint8List? mediaBytes; // To store media bytes (image or video)
-  String? mediaType; // To store media type (image or video)
+   Uint8List? mediaBytes;
+  String? mediaType;
+//new
+  String? mediaPath;
+  String? uploadedMediaUrl;
+  String? uploadedMediaName;
+  String? uploadedMediaTypee;
+
+//api start
+  Future<void> uploadFile() async {
+    log('File path is :: $_filePath');
+
+    try {
+      final file = File(_filePath!);
+      if (!await file.exists()) {
+        log('File does not exist at the specified path.');
+        return;
+      }
+      log('File size: ${await file.length()} bytes');
+      log('Uploading file...');
+
+      final Uri uri = Uri.parse("https://Solinovation.finegap.com/media");
+
+      var request = http.MultipartRequest('POST', uri);
+
+      final mimeType = lookupMimeType(_filePath!);
+      request.files.add(await http.MultipartFile.fromPath(
+        'file',
+        file.path,
+        contentType: mimeType != null ? MediaType.parse(mimeType) : null,
+      ));
+
+      http.StreamedResponse response = await request.send();
+
+      if (response.statusCode != 200) {
+        log('Error: ${response.statusCode}');
+        throw Exception('File upload failed');
+      }else{
+        log("${response.statusCode}");
+        final responseBody = await response.stream.bytesToString();
+        final jsonResponse = json.decode(responseBody);
+        // New variable to store media type
+        String uploadedMediaType;
+
+        // Check if the uploaded URL ends with specific video extensions
+        String uploadedUrl = '${jsonResponse['file']['url']}';
+        if (uploadedUrl.endsWith('.mp4') || uploadedUrl.endsWith('.mov') || uploadedUrl.endsWith('.avi')) {
+          uploadedMediaType = 'mp4';
+        } else {
+          uploadedMediaType = 'image';
+        }
+        // save in these variables
+        uploadedMediaUrl = '${jsonResponse['file']['url']}'; // Replace with actual URL
+        uploadedMediaName = '${jsonResponse['file']['name']}';
+        uploadedMediaTypee = uploadedMediaType;
+        //saved
+        log('Uploaded: ${uploadedMediaUrl}');
+        log('Uploaded Media Type: ${uploadedMediaType}');
+        log('Uploaded Media Path: ${uploadedUrl}');
+        log('Uploaded Media Name: ${uploadedMediaName}');
+        log("Single Response: \n"
+            "Message:: ${jsonResponse['message']}\n"
+            "Name:: ${jsonResponse['file']['name']}\n"
+            "Url:: ${jsonResponse['file']['url']}\n"
+            "Path:: ${jsonResponse['file']['path']}\n");
+        log("JsonResponse:: $jsonResponse");
+      }
+      log('Request URL: ${request.url}');
+      log('Request Headers: ${request.headers}');
+      log('Request Files: ${request.files}');
+    } catch (e) {
+      log("RESPONSE:: ${e.toString()}");
+      throw "File upload failed:: ${e.toString()}";
+    }
+  }
+
+
+  Future<String> uploadFileThrough(String filePath) async {
+    log('File path is :: $filePath');
+
+    try {
+      final file = File(filePath);
+      if (!await file.exists()) {
+        log('File does not exist at the specified path.');
+      }
+      log('File size: ${await file.length()} bytes');
+      log('Uploading file...');
+
+      final Uri uri = Uri.parse("https://Solinovation.finegap.com/media");
+
+      var request = http.MultipartRequest('POST', uri);
+
+      final mimeType = lookupMimeType(filePath);
+      request.files.add(await http.MultipartFile.fromPath(
+        'file',
+        file.path,
+        contentType: mimeType != null ? MediaType.parse(mimeType) : null,
+      ));
+
+      http.StreamedResponse response = await request.send();
+
+      if (response.statusCode != 200) {
+        log('Error: ${response.statusCode}');
+        throw Exception('File upload failed');
+      }else{
+        log("${response.statusCode}");
+        final responseBody = await response.stream.bytesToString();
+        final jsonResponse = json.decode(responseBody);
+        // New variable to store media type
+        String uploadedMediaType;
+
+        // Check if the uploaded URL ends with specific video extensions
+        String uploadedUrl = '${jsonResponse['file']['url']}';
+        if (uploadedUrl.endsWith('.mp4') || uploadedUrl.endsWith('.mov') || uploadedUrl.endsWith('.avi')) {
+          uploadedMediaType = 'mp4';
+        } else {
+          uploadedMediaType = 'image';
+        }
+        // save in these variables
+        uploadedMediaUrl = '${jsonResponse['file']['url']}'; // Replace with actual URL
+        uploadedMediaName = '${jsonResponse['file']['name']}';
+        uploadedMediaTypee = uploadedMediaType;
+        //saved
+        log('Uploaded: ${uploadedMediaUrl}');
+        log('Uploaded Media Type: ${uploadedMediaType}');
+        log('Uploaded Media Path: ${uploadedUrl}');
+        log('Uploaded Media Name: ${uploadedMediaName}');
+        log("JsonResponse:: $jsonResponse");
+        return jsonResponse['file']['name'];
+      }
+    } catch (e) {
+      log("RESPONSE:: ${e.toString()}");
+      throw "File upload failed:: ${e.toString()}";
+    }
+  }
+  //clear uploadedmedaiUrl
+  void clearUploadedMediaUrl() {
+    uploadedMediaUrl = null;
+    uploadedMediaName = null;
+    uploadedMediaTypee = null;
+  }
+
+  void handleResponse(http.Response response) {
+    if (response.statusCode == 200) {
+      // Handle successful response
+      log("File uploaded successfully: ${response.body}");
+    } else {
+      // Handle error response
+      log("File upload failed with status: ${response.statusCode}");
+      throw Exception("File upload failed: ${response.body}");
+    }
+  }
+//   Future<void> uploadFile(Uint8List mediaBytes) async {
+//     log('mediaBytes is :: $mediaBytes');
+//
+//     try {
+//       if (mediaBytes == null) return;
+//
+//       log('uploading file');
+//       final request = http.MultipartRequest(
+//         'POST',
+//         Uri.parse('https://Solinovation.finegap.com/media'), // Ensure this URL is correct
+//       );
+//
+//       // Create a MultipartFile from Uint8List
+//       request.files.add(http.MultipartFile.fromBytes(
+//         'file',
+//         mediaBytes,
+//       ));
+//
+//       // Log request details
+//       log('Request URL: ${request.url}');
+//       log('Request Files: ${request.files}');
+//
+//       final response = await request.send();
+//
+//       log("RESPONSE:: ${response.statusCode}");
+//       if (response.statusCode == 200) {
+//         final jsonResponse = json.decode(await response.stream.bytesToString());
+//         log("RESPONSE:: ${jsonResponse}");
+//         print('File uploaded successfully');
+//       } else {
+//         log('File upload failed: ${response.statusCode}'); // Log the status code
+//         throw Exception('File upload failed with status: ${response.statusCode}');
+//       }
+//     } catch (e) {
+//       log("RESPONSE:: ${e.toString()}");
+//       throw "File upload failed:: ${e.toString()}";
+//     }
+//   }
+  //end
+
+
+  String? _filePath;
+
+  String? get filePath => _filePath;
+
+  void savePath(path){
+    _filePath = path;
+    notifyListeners();
+
+  }
+
 
   pickMedia(BuildContext context) async {
     log('enter in pickMedia');
@@ -410,6 +621,7 @@ class ActionProvider extends ChangeNotifier {
 
         // Read the file bytes manually from the path
         File file = File(filePath);
+        savePath(file.path.toString());
         Uint8List mediaBytes = await file.readAsBytes();
 
         log('File bytes read successfully. Size: ${mediaBytes.length}');
@@ -686,4 +898,48 @@ class ActionProvider extends ChangeNotifier {
       rethrow;
     }
   }
+
+
+  final List<MediaPost> _posts = [];
+
+  List<MediaPost> get posts => _posts;
+
+
+  void saveModel(List<MediaPost> posts){
+    _posts.clear();
+    _posts.addAll(posts);
+    notifyListeners();
+  }
+
+  void toggleListCheck(int index,{required ToggleType type}){
+
+    switch(type){
+      case ToggleType.like:
+        if (_posts[index].likes.contains(currentUser)){
+          log("Remove Likes");
+          posts[index].likes.remove(currentUser);
+          unlikePost(_posts[index].timeStamp);
+        }else{
+          log("Add Likes");
+          posts[index].likes.add(currentUser);
+          likePost(_posts[index].timeStamp);
+        }
+        break;
+      case ToggleType.save:
+        if (_posts[index].saves.contains(currentUser)){
+          log("Remove Likes");
+          posts[index].saves.remove(currentUser);
+          unSavePost(_posts[index].timeStamp);
+        }else{
+          log("Add Likes");
+          posts[index].saves.add(currentUser);
+          savePost(_posts[index].timeStamp);
+        }
+        break;
+    }
+    notifyListeners();
+  }
+
+
+
 }

@@ -1,5 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crispy/constant.dart';
+import 'package:crispy/model/res/components/fullImagePreview.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
 import '../../../screens/myProfile/userProfile.dart';
 import '../../../screens/video/mediaViewerScreen.dart';
@@ -31,37 +35,21 @@ class MediaWrap extends StatelessWidget {
         final mediaList = snapshot.data!.docs
             .map((doc) => MediaPost.fromMap(doc.data() as Map<String, dynamic>))
             .toList();
-        String mediaType = '';
-        String determineMediaType(String url) {
-          if (RegExp(r'\.jpe?g$|\.png$', caseSensitive: false).hasMatch(url)) {
-            return 'image';
-          } else if (RegExp(
-            r'\.mov|\.avi|\.mp4$',
-            caseSensitive: false,
-          ).hasMatch(url)) {
-            return 'video';
-          }
-          return 'unknown';
-        }
-
         return Padding(
           padding: const EdgeInsets.all(8.0),
           child: Wrap(
             alignment: WrapAlignment.start,
-            spacing: 10,
+            spacing: 5,
             runSpacing: 20,
             children: mediaList.map((media) {
-              final mediaType = determineMediaType(media.mediaUrl);
               return GestureDetector(
                 onTap: () {
-                  if (media.mediaUrl.isNotEmpty) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            VideoPlayerScreen(videoUrl: media.mediaUrl),
-                      ),
+                  if (media.mediaType =='mp4') {
+                    Get.to(
+                            VideoPlayerScreen(videoUrl: customLink+media.mediaUrl),
                     );
+                  }else{
+                   Get.to(FullImagePreview(image: customLink+media.mediaUrl));
                   }
                 },
                 child: Container(
@@ -73,10 +61,10 @@ class MediaWrap extends StatelessWidget {
                   ),
                   child: ClipRRect(
                       borderRadius: BorderRadius.circular(15),
-                      child: mediaType == "image"
-                          ? CachedShimmerImageWidget(imageUrl: media.mediaUrl)
+                      child: media.mediaType == "image"
+                          ? CachedShimmerImageWidget(imageUrl: customLink+media.mediaUrl)
                           : VideoThumbnail(
-                        videoUrl: media.mediaUrl,
+                        videoUrl: customLink+media.mediaUrl,
                       )),
                 ),
               );
