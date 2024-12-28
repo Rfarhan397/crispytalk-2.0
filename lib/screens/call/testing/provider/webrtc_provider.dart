@@ -288,13 +288,20 @@ class WebrtcProvider with ChangeNotifier {
   Future<MediaStream> _getUserMedia({bool audioOnly = false}) async {
     final Map<String, dynamic> mediaConstraints = {
       'audio': true,
-      'video': audioOnly
-          ? false
-          : {
-              'facingMode': 'user',
-            },
+      'video': audioOnly ? false : {'facingMode': 'user'},
     };
-    return await navigator.mediaDevices.getUserMedia(mediaConstraints);
+
+    try {
+      // Request access to media devices
+      MediaStream stream =
+          await navigator.mediaDevices.getUserMedia(mediaConstraints);
+      return stream;
+    } catch (e) {
+      log("Error accessing media devices: $e");
+      // Handle the error appropriately, e.g., show a message to the user
+      throw Exception(
+          "Unable to access media devices. Please check your permissions.");
+    }
   }
 
   void toggleMute() {

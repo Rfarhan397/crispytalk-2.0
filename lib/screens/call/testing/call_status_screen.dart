@@ -54,7 +54,7 @@ class CallStatusScreen extends StatelessWidget {
                                      callID: controller.text,
                                      doctorName: "doctorName",
                                      doctorImage: "doctorImage",
-                                     isVideo: false
+                                     isVideo: true
                                  ));
                            },
                                width: 30.w,
@@ -76,7 +76,7 @@ class CallStatusScreen extends StatelessWidget {
                                  callID: controller.text,
                                  doctorName: "doctorName",
                                  doctorImage: "doctorImage",
-                                 isVideo: false,
+                                 isVideo: true,
                                id: 's',
                                patientToken: 'ss',
                              ));
