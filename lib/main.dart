@@ -58,13 +58,13 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  // final fcmService = FCMService();
-  // await fcmService.initialize();
+  final fcmService = FCMServiceR();
+  await fcmService.initialize();
   AppUtils().setPortrait();
 
 
-  final fcmServicer = FCMServiceR();
-  await fcmServicer.initialize();
+  // final fcmServicer = FCMServiceR();
+  // await fcmServicer.initialize();
 
 
 

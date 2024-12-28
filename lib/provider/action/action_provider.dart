@@ -22,6 +22,7 @@ import '../../model/mediaPost/mediaPost_model.dart';
 import '../../model/res/constant/app_utils.dart';
 import '../../model/res/routes/routes_name.dart';
 import '../../model/services/enum/toastType.dart';
+import '../../model/services/fcm/rehman_fcm.dart';
 import '../chat/chatProvider.dart';
 import '../current_user/current_user_provider.dart';
 import '../mediaSelection/mediaSelectionProvider.dart';
@@ -955,7 +956,7 @@ class ActionProvider extends ChangeNotifier {
           log("Add Likes");
           posts[index].likes.add(currentUser);
           likePost(_posts[index].timeStamp);
-          FCMService().sendNotification(
+          FCMServiceR().sendNotification(
               posts[index].userDetails?.fcmToken ?? '',
               'New Notification',
               '${cUser?.name ?? "User"} liked your post',
