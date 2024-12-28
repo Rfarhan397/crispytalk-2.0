@@ -24,6 +24,12 @@ class AudioCallProvider with ChangeNotifier {
       final callDoc = _firestore.collection('calls').doc(callId);
       _peerConnection = await _createPeerConnection();
 
+      // Notify the other party that a call is incoming
+      await callDoc.set({
+        'status': 'ringing', // Set the call status to ringing
+        // Additional data can be added here if needed
+      });
+
       _peerConnection!.onIceCandidate = (RTCIceCandidate candidate) {
         callDoc.collection('candidates').add({
           'candidate': candidate.toMap(),
@@ -54,7 +60,7 @@ class AudioCallProvider with ChangeNotifier {
       });
 
       callDoc.snapshots().listen(
-            (snapshot) async {
+        (snapshot) async {
           if (snapshot.exists) {
             var data = snapshot.data();
             if (data != null && data['answer'] != null) {
@@ -120,6 +126,9 @@ class AudioCallProvider with ChangeNotifier {
       if (offerSnapshot.exists) {
         var offerData = offerSnapshot.data();
         if (offerData != null && offerData['offer'] != null) {
+          // Call is ringing, play ringing sound
+          _playRingingSound();
+
           RTCSessionDescription offer = RTCSessionDescription(
               offerData['offer']['sdp'], offerData['offer']['type']);
           await _peerConnection!.setRemoteDescription(offer);
@@ -166,9 +175,9 @@ class AudioCallProvider with ChangeNotifier {
       final now = DateTime.now();
       final duration = now.difference(_callStartTime!);
       final minutes =
-      duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+          duration.inMinutes.remainder(60).toString().padLeft(2, '0');
       final seconds =
-      duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+          duration.inSeconds.remainder(60).toString().padLeft(2, '0');
       callDuration = "$minutes:$seconds";
       notifyListeners();
     });
@@ -251,6 +260,13 @@ class AudioCallProvider with ChangeNotifier {
     } else {
       print("Local stream is null!");
     }
+  }
+
+  void _playRingingSound() {
+    // Implement the logic to play a ringing sound
+    // This could be a simple audio player that plays a sound file
+    print("Playing ringing sound...");
+    // Example: AudioPlayer().play('ringing_sound.mp3');
   }
 
   @override

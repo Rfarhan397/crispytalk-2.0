@@ -1,5 +1,6 @@
 
 import 'package:crispy/model/res/routes/routes_name.dart';
+import 'package:crispy/screens/call/testing/call_status_screen.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import '../../../screens/MediaSelection/showMedia.dart';
@@ -33,6 +34,7 @@ import '../../../screens/video/videoScreen.dart';
 class Routes {
   static final routes = [
     GetPage(name: RoutesName.splashScreen, page: () => SplashScreen()),
+    GetPage(name: RoutesName.testScreen, page: () => CallStatusScreen()),
     GetPage(name: RoutesName.loginScreen, page: () => LoginScreen()),
     GetPage(name: RoutesName.signUp, page: () => SignUpScreen()),
     // GetPage(name: RoutesName.code, page: () => CodeScreen()),

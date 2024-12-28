@@ -21,6 +21,7 @@ import 'package:crispy/provider/stream/streamProvider.dart';
 import 'package:crispy/provider/theme/theme_provider.dart';
 import 'package:crispy/provider/user_provider/user_provider.dart';
 import 'package:crispy/provider/video/videoProvider.dart';
+import 'package:crispy/screens/call/testing/provider/webrtc_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -111,6 +112,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PostCacheProvider()),
         ChangeNotifierProvider(create: (_) => SuggestedUsersProvider()),
         ChangeNotifierProvider(create: (_) => MediaPostProvider()),
+        ChangeNotifierProvider(create: (_) => WebrtcProvider()),
 
       ],
       child: Consumer<AppLifeCycleProvider>(
@@ -124,7 +126,7 @@ class MyApp extends StatelessWidget {
 
                     debugShowCheckedModeBanner: false,
                     title: 'Crispy Talk',
-                    initialRoute: RoutesName.splashScreen,
+                    initialRoute: RoutesName.testScreen,
                     getPages: Routes.routes,
                   );
                 }
