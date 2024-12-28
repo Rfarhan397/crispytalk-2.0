@@ -3,10 +3,13 @@ import 'package:crispy/provider/action/action_provider.dart';
 import 'package:crispy/provider/mediaPost/media_post_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import '../../constant.dart';
+import '../../main.dart';
 import '../../model/res/constant/app_assets.dart';
+import '../../model/services/fcm/rehman_local.dart';
 import '../../provider/current_user/current_user_provider.dart';
 import '../../provider/postCache/postCacheProvider.dart';
 import '../../provider/savedPost/savedPostProvider.dart';
@@ -28,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     _initializeApp();
-  }
+    FlutterLocalNotification.initialize(flutterLocalNotificationsPlugin);  }
 
   Future<void> _initializeApp() async {
     try {

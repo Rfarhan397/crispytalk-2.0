@@ -62,7 +62,8 @@ class FCMService {
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
         iOS: DarwinInitializationSettings(),
       ),
-      onDidReceiveNotificationResponse: _handleNotificationResponse,
+      onDidReceiveNotificationResponse: _foregroundNotificationResponse,
+      onDidReceiveBackgroundNotificationResponse: _backgroundNotificationResponse
     );
   }
 
@@ -200,9 +201,27 @@ class FCMService {
   void _handleNotificationResponse(NotificationResponse response) {
     if (response.payload != null) {
       final Map<String, dynamic> data = jsonDecode(response.payload!);
-      log('kuch');
       // Use handleMessage for consistent navigation
       handleMessage(RemoteMessage(data: data));
+    }
+  }
+
+
+  ////new
+  @pragma('vm:entry-point')
+  static void _backgroundNotificationResponse(NotificationResponse response) {
+    if (response.payload != null) {
+      final message = RemoteMessage.fromMap(jsonDecode(response.payload!));
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        FCMService().handleMessage(message);
+      });
+    }
+  }
+
+  void _foregroundNotificationResponse(NotificationResponse response) {
+    if (response.payload != null) {
+      final message = RemoteMessage.fromMap(jsonDecode(response.payload!));
+      handleMessage(message);
     }
   }
 }

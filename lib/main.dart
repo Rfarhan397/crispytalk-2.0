@@ -33,19 +33,21 @@ import 'firebase_options.dart';
 import 'model/res/routes/routes.dart';
 import 'model/res/routes/routes_name.dart';
 import 'model/services/fcm/fcm_services.dart';
+import 'model/services/fcm/rehman_fcm.dart';
+import 'model/services/fcm/rehman_messge_handle.dart';
 import 'model/services/sharedpreference/sp_service.dart';
 import 'provider/suggested_users/suggested_users_provider.dart';
 
 
-
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  log("Handling background message: ${message.messageId}");
-  final fcmService = FCMService();
-  await SharedPreferencesService.getInstance();
-  fcmService.handleMessage(message);
-}
+//
+// @pragma('vm:entry-point')
+// Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+//   await Firebase.initializeApp();
+//   log("Handling background message: ${message.messageId}");
+//   final fcmService = FCMService();
+//   await SharedPreferencesService.getInstance();
+//   fcmService.handleMessage(message);
+// }
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 FlutterLocalNotificationsPlugin();
@@ -55,10 +57,16 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  final fcmService = FCMService();
-  await fcmService.initialize();
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  // final fcmService = FCMService();
+  // await fcmService.initialize();
   AppUtils().setPortrait();
+
+
+  final fcmServicer = FCMServiceR();
+  await fcmServicer.initialize();
+
+
 
   RemoteMessage? initialMessage =
   await FirebaseMessaging.instance.getInitialMessage();

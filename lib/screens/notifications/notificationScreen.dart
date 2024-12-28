@@ -39,27 +39,9 @@ class NotificationScreen extends StatelessWidget {
             child: Column(
               children: [
                 // Custom AppBar
-                Row(
+                const Row(
                   children: [
                     AppBackButton(),
-                    // GestureDetector(
-                    //   onTap: () {
-                    //     Get.back();
-                    //   },
-                    //   child: Container(
-                    //     height: 25,
-                    //     width: 25,
-                    //     decoration: BoxDecoration(
-                    //       borderRadius: BorderRadius.circular(100),
-                    //       color: Colors.white,
-                    //     ),
-                    //     child: const Icon(
-                    //       Icons.arrow_back_ios,
-                    //       color: primaryColor,
-                    //       size: 15,
-                    //     ),
-                    //   ),
-                    // ),
                     SizedBox(width: 16),
                     AppTextWidget(
                       text: "Notification",
