@@ -120,10 +120,7 @@ class MyApp extends StatelessWidget {
             return Sizer(
                 builder: (context, orientation, deviceType) {
                   return  GetMaterialApp(
-                    theme: ThemeData(
-                        scaffoldBackgroundColor: Colors.white
-                    ),
-
+                    theme: ThemeData(scaffoldBackgroundColor: Colors.white),
                     debugShowCheckedModeBanner: false,
                     title: 'Crispy Talk',
                     initialRoute: RoutesName.splashScreen,

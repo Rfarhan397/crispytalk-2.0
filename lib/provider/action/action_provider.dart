@@ -659,43 +659,66 @@ class ActionProvider extends ChangeNotifier {
   }
 
 //////////////add comment to posts//////
+//   Future<void> addComment(
+//     String postId,
+//     String content,
+//
+//   ) async {
+//     var id = FirebaseFirestore.instance.collection('posts').doc(postId).collection('comments').doc().id;
+//
+//     final comment = CommentModel(
+//       commentId: id,
+//       userId: currentUser,
+//       content: content,
+//       timestamp: DateTime.now().millisecondsSinceEpoch.toString(),
+//     );
+//
+//     await FirebaseFirestore.instance
+//         .collection('posts')
+//         .doc(postId)
+//         .collection('comments')
+//         .doc(id)
+//         .set(comment.toMap());
+//   }
   Future<void> addComment(
-    String postId,
-    String content,
-    String token,
-    String currentUserName,
-    String postOwnerId,
-    String notificationBody,
-  ) async {
-    var id = FirebaseFirestore.instance
-        .collection('posts')
-        .doc(postId)
-        .collection('comments')
-        .doc()
-        .id;
+      String postId,
+      String content,
+      {required VoidCallback onSuccess} // Callback function to run after successful comment addition
+      ) async {
+    try {
+      // Generate a new comment ID
+      var id = FirebaseFirestore.instance
+          .collection('posts')
+          .doc(postId)
+          .collection('comments')
+          .doc()
+          .id;
 
-    final userId = currentUser;
-    final comment = CommentModel(
-      commentId: id,
-      userId: userId,
-      content: content,
-      timestamp: DateTime.now().millisecondsSinceEpoch.toString(),
-    );
+      // Create a new comment model
+      final comment = CommentModel(
+        commentId: id,
+        userId: currentUser,
+        content: content,
+        timestamp: DateTime.now().millisecondsSinceEpoch.toString(),
+      );
 
-    await FirebaseFirestore.instance
-        .collection('posts')
-        .doc(postId)
-        .collection('comments')
-        .doc(id)
-        .set(comment.toMap());
-    _uploadNotification(
-      token,
-      currentUserName,
-      postOwnerId,
-      postId,
-      notificationBody,
-    );
+      // Add the comment to Firestore
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(postId)
+          .collection('comments')
+          .doc(id)
+          .set(comment.toMap());
+
+      // Call the success callback function
+      onSuccess();
+    } catch (e) {
+      // Handle any errors
+      print("Error adding comment: $e");
+      throw Exception("Failed to add comment. Please try again.");
+    }
   }
+
 
   /////get comments for a post////////////
   Stream<List<CommentModel>> getComments(String postId) {
@@ -816,28 +839,7 @@ class ActionProvider extends ChangeNotifier {
     }
   }
 
-  void _uploadNotification(String token, String currentUserName,
-      notificationBody, String postOwnerId, String postId) {
-    // Send the notification via FCM
-    FCMService().sendNotification(
-      token,
-      'A New Notification!',
-      '$currentUserName $notificationBody',
-      currentUser,
-    );
-
-    // Save the notification in Firestore
-    _saveNotificationToFirestore(
-      recipientId: postOwnerId,
-      senderId: currentUser,
-      message: '$currentUserName liked your post',
-      postId: postId,
-      type: 'like',
-      //save the user name and photo too
-    );
-  }
-
-  void _saveNotificationToFirestore({
+  void saveNotificationToFirestore({
     required String recipientId,
     required String senderId,
     required String message,
@@ -961,7 +963,7 @@ class ActionProvider extends ChangeNotifier {
               '${cUser?.name ?? "User"} liked your post',
               currentUser);
           try {
-            _saveNotificationToFirestore(
+            saveNotificationToFirestore(
               recipientId: posts[index].userDetails!.userUid,
               senderId: currentUser,
               message: '${cUser?.name} liked your post',

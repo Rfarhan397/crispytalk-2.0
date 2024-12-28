@@ -54,8 +54,11 @@ class _SuggestedUsersState extends State<SuggestedUsers> {
                 ),
               ),
               Container(
-                height: 160,
-                color: const Color(0xffD9D9D9),
+                height: 16.h,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: const Color(0xffD9D9D9),
+                ),
                 child: Stack(
                   children: [
                     SuggestionList(currentUserId: widget.currentUserId),
@@ -114,7 +117,7 @@ class SuggestionList extends StatelessWidget {
               child: SuggestionCard(
                 profileImage: userData['profileUrl'] ?? '',
                 username: userData['name'] ?? 'Unknown User',
-                email: userData['email'] ?? 'Unknown Email',
+                // email: userData['email'] ?? 'Unknown Email',
                 userId: userData['userUid'],
               ),
             );
@@ -128,13 +131,13 @@ class SuggestionList extends StatelessWidget {
 class SuggestionCard extends StatelessWidget {
   final String profileImage;
   final String username;
-  final String email;
+  // final String email;
   final String userId;
 
   const SuggestionCard({
     required this.profileImage,
     required this.username,
-    required this.email,
+    // required this.email,
     required this.userId,
     Key? key,
   }) : super(key: key);
@@ -150,7 +153,7 @@ class SuggestionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
           CircleAvatar(
               radius: 22,
@@ -167,13 +170,13 @@ class SuggestionCard extends StatelessWidget {
             color: Colors.black,
             maxLines: 1,
           ),
-          AppTextWidget(
-            text: email,
-            fontSize: 11,
-            color: const Color(0xff6F6D6D),
-            fontWeight: FontWeight.w500,
-            overflow: TextOverflow.ellipsis,
-          ),
+          // AppTextWidget(
+          //   text: email,
+          //   fontSize: 11,
+          //   color: const Color(0xff6F6D6D),
+          //   fontWeight: FontWeight.w500,
+          //   overflow: TextOverflow.ellipsis,
+          // ),
           SizedBox(height: 1.h),
           StreamBuilder<DocumentSnapshot>(
             stream: FirebaseFirestore.instance

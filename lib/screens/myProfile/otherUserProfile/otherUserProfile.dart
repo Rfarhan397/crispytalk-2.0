@@ -203,17 +203,21 @@ class UserProfileOtherUser extends StatelessWidget {
                 SizedBox(height: 3.w),
                 OtherActionButton(userModel),
                 SizedBox(height: 2.h),
-                // if(cUser!.blocks.contains(userModel.userUid))
+                 if(cUser!.blocks.contains(userModel.userUid))...[
+                   const Align(
+                     alignment: Alignment.center,
+                     child: AppTextWidget(
+                       text: 'Blocked',
+                     ),
+                   ),
+                 ]else...[
+                   MediaWrap(userUid: userModel.userUid),
+                 ],
 
-                  const Align(
-                    alignment: Alignment.center,
-                    child: AppTextWidget(
-                      text: 'Blocked',
-                    ),
-                  ),
+
                 // if(!cUser.blocks.contains(userModel.userUid))
 
-                  MediaWrap(userUid: userModel.userUid),
+
               ],
             ),
           ),

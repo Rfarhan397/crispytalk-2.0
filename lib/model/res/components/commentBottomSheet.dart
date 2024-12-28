@@ -1,4 +1,7 @@
+import 'dart:developer';
+
 import 'package:crispy/model/res/components/shimmer.dart';
+import 'package:crispy/model/services/fcm/rehman_fcm.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
@@ -211,10 +214,29 @@ class CommentBottomSheet extends StatelessWidget {
                                     .addComment(
                                     postId,
                                     commentController.text,
-                                    token,
-                                    currentUserProvider!.name.toString(),
-                                    postOwnerUid,
-                                    'commented on your video');
+                                  onSuccess: () async {
+                                    try {
+                                      await FCMServiceR().sendNotification(
+                                        token,
+                                        'A New Notification',
+                                        '${currentUserProvider?.name} commented on your post',
+                                        currentUser,
+                                      );
+
+                                       action.saveNotificationToFirestore(
+                                        recipientId: postOwnerUid,
+                                        senderId: currentUser,
+                                        message: '${currentUserProvider?.name} commented on your post',
+                                        postId: postId,
+                                        type: 'comment',
+                                      );
+                                      log("Notification sent and saved successfully!");
+                                    } catch (e) {
+                                      log("Error in notification process: $e");
+                                    }
+                                  },
+
+                                );
                                 commentController.clear();
                               }
                             },
