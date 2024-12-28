@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:googleapis_auth/auth.dart';
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:http/http.dart' as http;
@@ -14,6 +16,8 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../constant.dart';
+import '../../../screens/call/audioCall/audio.dart';
+import '../../../screens/call/videoCall/video.dart';
 
 class FCMServiceR {
   List<Color> getPredefinedColors() {
@@ -191,58 +195,29 @@ class FCMServiceR {
   }
 
   void handleMessage(RemoteMessage message) async {
-    // if (message.notification?.title?.contains('Appointment') == true) {
-    //   final data = message.data;
-    //   print("Data: $data");
-    //   navigateToChatScreen(
-    //     receiverImage: data['receiverImage'] ?? "",
-    //     senderImage: data['senderImage'] ?? "",
-    //     token: data['token'] ?? "",
-    //     senderId: data['senderId'] ?? "",
-    //     senderName: data['senderName'] ?? "",
-    //     receiverId: data['receiverId'] ?? "",
-    //     receiverName: data['receiverName'] ?? "",
-    //     comingFrom: data['comingFrom'] ?? "",
-    //     userType: data['userType'] ?? "",
-    //     status: data['status'] ?? "",
-    //   );
-    // } else if (message.notification?.title?.contains('Appointment Started') ==
-    //     true) {
-    //   final SharedPreferences preferences =
-    //   await SharedPreferences.getInstance();
-    //   final userType = preferences.getString('userType');
-    //   // final AppointmentProvider appointmentProvider = AppointmentProvider();
-    //   if (userType == null) {
-    //     print('type is null');
-    //   } else {
-    //     if (userType == 'patient') {
-    //       navigateToTalkToSpecialistScreen();
-    //     } else {
-    //       // appointmentProvider.fetchAppointments();
-    //       navigateToDoctorAppointmentScreen();
-    //     }
-    //   }
-    // }
-
-    final data = message.data;
-    String screen = data['screen'] ?? '';
-    print("NotificationClickSCreen: $screen");
-    if (screen == 'appointment') {
-      navigateToChatScreen(
-        receiverImage: data['receiverImage'] ?? "",
-        senderImage: data['senderImage'] ?? "",
-        token: data['token'] ?? "",
-        senderId: data['senderId'] ?? "",
-        senderName: data['senderName'] ?? "",
-        receiverId: data['receiverId'] ?? "",
-        receiverName: data['receiverName'] ?? "",
-        comingFrom: data['comingFrom'] ?? "",
-        userType: data['userType'] ?? "",
-        status: data['status'] ?? "",
-      );
-    } else if (screen == 'Appointment') {
-      navigateToTalkToSpecialistScreen();
+    final additionalData = message.data;
+    if (additionalData.isNotEmpty) {
+      if (additionalData['isVideo'] == 'true') {
+        Get.to(
+              () => VideoCallScreen(
+            callId: additionalData['callID'],
+            isCaller: false,
+            callerImage: additionalData['image'],
+            callerName: additionalData['name'],
+          ),
+        );
+      } else if (additionalData['isVideo'] == 'false') {
+        Get.to(
+              () => AudioCallScreen(
+            callId: additionalData['callID'],
+            isCaller: false,
+            callerImage: additionalData['image'],
+            callerName: additionalData['name'],
+          ),
+        );
+      }
     }
+
 
 
 

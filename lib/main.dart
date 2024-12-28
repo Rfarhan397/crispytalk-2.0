@@ -59,13 +59,13 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  // final fcmService = FCMService();
-  // await fcmService.initialize();
+  final fcmService = FCMService();
+  await fcmService.initialize();
   AppUtils().setPortrait();
 
 
-  final fcmServicer = FCMServiceR();
-  await fcmServicer.initialize();
+  // final fcmServicer = FCMServiceR();
+  // await fcmServicer.initialize();
 
 
 
@@ -126,7 +126,7 @@ class MyApp extends StatelessWidget {
 
                     debugShowCheckedModeBanner: false,
                     title: 'Crispy Talk',
-                    initialRoute: RoutesName.testScreen,
+                    initialRoute: RoutesName.splashScreen,
                     getPages: Routes.routes,
                   );
                 }
