@@ -29,7 +29,7 @@ class WebrtcProvider with ChangeNotifier {
   String callDuration = "00:00"; // To show the duration in the format mm:ss
   bool isTimerRunning = false;
 
-  CallProvider() {
+  WebrtcProvider() {
     initRenderers();
   }
 
@@ -38,8 +38,13 @@ class WebrtcProvider with ChangeNotifier {
     await remoteRenderer.initialize();
   }
 
-  Future<void> startCall(String callId,{bool audioOnly = false}) async {
+  Future<void> startCall(String callId, {bool audioOnly = false}) async {
+    log('Start Calling Function $callId');
     isAudioCall = audioOnly; // Set the call type
+    if (callId.isEmpty) {
+      log("Error: callId cannot be empty.");
+      return; // Exit the method if callId is empty
+    }
     try {
       final callDoc = _firestore.collection('calls').doc(callId);
       _peerConnection = await _createPeerConnection();
@@ -101,7 +106,6 @@ class WebrtcProvider with ChangeNotifier {
         }
       });
 
-
       // initCallListener(callId);
 
       callDoc.collection('candidates').snapshots().listen((snapshot) {
@@ -119,7 +123,7 @@ class WebrtcProvider with ChangeNotifier {
       inCall = true;
       notifyListeners();
     } catch (e) {
-      print("Error starting call: $e");
+      log("Error starting call: $e");
     }
   }
 
@@ -130,8 +134,10 @@ class WebrtcProvider with ChangeNotifier {
     _callTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       final now = DateTime.now();
       final duration = now.difference(_callStartTime!);
-      final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-      final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+      final minutes =
+          duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+      final seconds =
+          duration.inSeconds.remainder(60).toString().padLeft(2, '0');
       callDuration = "$minutes:$seconds";
       notifyListeners();
     });
@@ -145,10 +151,13 @@ class WebrtcProvider with ChangeNotifier {
     }
   }
 
-  Future<void> joinCall(String callId,{bool audioOnly = false}) async {
+  Future<void> joinCall(String callId, {bool audioOnly = false}) async {
     isAudioCall = audioOnly; // Set the call type
+    if (callId.isEmpty) {
+      log("Error: callId cannot be empty.");
+      return; // Exit the method if callId is empty
+    }
     try {
-
       final callDoc = _firestore.collection('calls').doc(callId);
       _peerConnection = await _createPeerConnection();
 
@@ -238,15 +247,12 @@ class WebrtcProvider with ChangeNotifier {
   //   notifyListeners();
   // }
 
-
   // End call function
   Future<void> endCall(String callId,
-      {
-        bool remoteEnd = false,
-        String type = "patient",
-        bool userJoined = false,
-        String id = ""
-      }) async {
+      {bool remoteEnd = false,
+      String type = "patient",
+      bool userJoined = false,
+      String id = ""}) async {
     try {
       if (!remoteEnd) {
         await _firestore.collection('calls').doc(callId).update({
@@ -264,9 +270,6 @@ class WebrtcProvider with ChangeNotifier {
       isMuted = false;
       isUserJoined = false;
       notifyListeners();
-
-
-
     } catch (e) {
       log('Error ending the call: $e');
     }
@@ -282,16 +285,14 @@ class WebrtcProvider with ChangeNotifier {
     return pc;
   }
 
-
-
   Future<MediaStream> _getUserMedia({bool audioOnly = false}) async {
     final Map<String, dynamic> mediaConstraints = {
       'audio': true,
       'video': audioOnly
           ? false
           : {
-        'facingMode': 'user',
-      },
+              'facingMode': 'user',
+            },
     };
     return await navigator.mediaDevices.getUserMedia(mediaConstraints);
   }
@@ -383,7 +384,6 @@ class WebrtcProvider with ChangeNotifier {
     }
   }
 
-
   // Method to toggle PiP mode
   void togglePiP() {
     isPiPMode = !isPiPMode;
@@ -407,17 +407,17 @@ class WebrtcProvider with ChangeNotifier {
 
         if (data != null && data['offer'] != null) {
           RTCSessionDescription offer = RTCSessionDescription(
-              data['offer']['sdp'],
-              data['offer']['type']
-          );
+              data['offer']['sdp'], data['offer']['type']);
 
           // Add null check for peerConnection
           if (_peerConnection != null) {
             // Ensure the connection state is appropriate
-            if (_peerConnection!.signalingState == RTCSignalingState.RTCSignalingStateStable) {
+            if (_peerConnection!.signalingState ==
+                RTCSignalingState.RTCSignalingStateStable) {
               await _peerConnection!.setRemoteDescription(offer);
 
-              RTCSessionDescription answer = await _peerConnection!.createAnswer();
+              RTCSessionDescription answer =
+                  await _peerConnection!.createAnswer();
               await _peerConnection!.setLocalDescription(answer);
 
               await callDoc.update({
@@ -436,7 +436,8 @@ class WebrtcProvider with ChangeNotifier {
         // Detect if the call has ended
         if (data != null && data['status'] == 'ended') {
           log('Call has ended');
-          endCall(callId, remoteEnd: true); // Automatically end call on this side
+          endCall(callId,
+              remoteEnd: true); // Automatically end call on this side
         }
       } else {
         log('Call document does not exist.');
@@ -457,8 +458,8 @@ class WebrtcProvider with ChangeNotifier {
 //   }
 //
 // }
-
 }
+
 class AudioOutputManager {
   static const MethodChannel _channel = MethodChannel('audio_output');
   static Future<void> setAudioOutput(String type) async {
@@ -467,7 +468,5 @@ class AudioOutputManager {
     } on PlatformException catch (e) {
       log("Failed to set audio output: '${e.message}'.");
     }
-
   }
-
 }

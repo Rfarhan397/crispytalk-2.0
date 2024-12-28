@@ -1,7 +1,13 @@
+import 'package:crispy/constant.dart';
 import 'package:crispy/model/res/widgets/app_text_field.dart';
 import 'package:crispy/model/res/widgets/button_widget.dart';
+import 'package:crispy/screens/call/testing/call_acceptance_screen.dart';
+import 'package:crispy/screens/call/testing/call_request_screen.dart';
 import 'package:crispy/screens/call/testing/provider/webrtc_provider.dart';
+import 'package:crispy/screens/call/testing/zego_service.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
@@ -35,8 +41,21 @@ class CallStatusScreen extends StatelessWidget {
                          child: Padding(
                            padding: const EdgeInsets.all(8.0),
                            child: ButtonWidget(
-                               text: "Call Now", onClicked: (){
-                                 provider.startCall("12",audioOnly: true);
+                               text: "Call Now", onClicked: () async{
+                             // fireStore.collection("collectionPath").doc("s").set(
+                             //     {
+                             //       "hello" : "adad"
+                             //     });
+                             // final zego = ZegoService();
+                             //
+                             // await zego.createRoom("123455");
+                                 Get.to(
+                                      CallRequestScreen(
+                                     callID: controller.text,
+                                     doctorName: "doctorName",
+                                     doctorImage: "doctorImage",
+                                     isVideo: false
+                                 ));
                            },
                                width: 30.w,
                                height: 60,
@@ -48,7 +67,19 @@ class CallStatusScreen extends StatelessWidget {
                            padding: const EdgeInsets.all(8.0),
                            child: ButtonWidget(
                                text: "Received Call", onClicked: (){
-                                 provider.joinCall("12",audioOnly: true);
+                                 fireStore.collection("collectionPath").doc("s").set(
+                                     {
+                                       "hello" : "adad"
+                                     });
+                             Get.to(
+                                  VideoCallAcceptScreen(
+                                 callID: controller.text,
+                                 doctorName: "doctorName",
+                                 doctorImage: "doctorImage",
+                                 isVideo: false,
+                               id: 's',
+                               patientToken: 'ss',
+                             ));
                            },
                                width: 30.w,
                                height: 60,
