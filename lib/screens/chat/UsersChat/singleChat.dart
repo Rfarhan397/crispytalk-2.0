@@ -236,7 +236,7 @@ class ChatScreen extends StatelessWidget {
       ),
     );
 
-    FCMService().sendNotification(
+    FCMServiceR().sendNotification(
       fcmToken,
       'Audio Call Request',
       '${user!.name} is calling you ...',
@@ -263,7 +263,7 @@ class ChatScreen extends StatelessWidget {
         callerName: user.name,
       ),
     );
-    FCMService().sendNotification(
+    FCMServiceR().sendNotification(
       fcmToken,
       'Video Call Request',
       '${user?.name} is calling you ...',
