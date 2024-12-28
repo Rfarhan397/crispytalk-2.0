@@ -36,7 +36,7 @@ class CallStatusScreen extends StatelessWidget {
                            padding: const EdgeInsets.all(8.0),
                            child: ButtonWidget(
                                text: "Call Now", onClicked: (){
-                                 provider.startCall("12");
+                                 provider.startCall("12",audioOnly: true);
                            },
                                width: 30.w,
                                height: 60,
@@ -48,7 +48,7 @@ class CallStatusScreen extends StatelessWidget {
                            padding: const EdgeInsets.all(8.0),
                            child: ButtonWidget(
                                text: "Received Call", onClicked: (){
-                                 provider.joinCall("12");
+                                 provider.joinCall("12",audioOnly: true);
                            },
                                width: 30.w,
                                height: 60,
