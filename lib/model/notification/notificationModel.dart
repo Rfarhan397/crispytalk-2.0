@@ -5,7 +5,7 @@ class NotificationModel {
   final String recipientId;
   final String senderId;
   final String type;
-  final DateTime timestamp;
+  final String timestamp;
 
   NotificationModel({
     required this.id,
@@ -37,7 +37,7 @@ class NotificationModel {
       recipientId: map['recipientId'] as String,
       senderId: map['senderId'] as String,
       type: map['type'] as String,
-      timestamp: DateTime.fromMillisecondsSinceEpoch(map['timestamp']),
+      timestamp: map['timestamp'],
     );
   }
 }

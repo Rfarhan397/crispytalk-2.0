@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import '../../constant.dart';
 import '../../model/chatRoom/chatRoomModel.dart';
 import '../../model/mediaPost/mediaPost_model.dart';
+import '../../model/notification/notificationModel.dart';
 import '../../model/user_model/user_model.dart';
 import '../../screens/chat/Groups/groupList.dart';
 
@@ -197,7 +198,44 @@ class StreamDataProvider extends ChangeNotifier {
       return posts;
     });
   }
+  Stream<List<MediaPost>> getFriendsPostsStream() {
+    final postsCollection = FirebaseFirestore.instance.collection('posts');
 
+    return postsCollection
+        .where('audience', isEqualTo: 'Friends')
+        .snapshots()
+        .asyncMap((querySnapshot) async {
+      List<MediaPost> mediaPosts = querySnapshot.docs.map((doc) {
+        return MediaPost.fromMap(doc.data());
+      }).toList();
+
+      // Fetch current user's data
+      final currentUserDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser)
+          .get();
+      final followingList = List<String>.from(currentUserDoc.data()?['following'] ?? []);
+      final blockedUserIds = List<String>.from(currentUserDoc.data()?['blocks'] ?? []); // Fetch block list
+
+      // Fetch user details for each MediaPost
+      for (var post in mediaPosts) {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(post.userUid)
+            .get();
+
+        if (userDoc.exists) {
+          post.userDetails = UserModelT.fromMap(userDoc.data()!);
+        }
+      }
+
+      // Filter posts to only include those from users in the following list and not in the block list
+      mediaPosts = mediaPosts.where((post) =>
+          followingList.contains(post.userUid) && !blockedUserIds.contains(post.userUid)).toList();
+
+      return mediaPosts;
+    });
+  }
   Stream<List<UserModelT>> getBlockedUsers(String userID) async* {
     try {
       // Get the current user's block list
@@ -229,6 +267,7 @@ class StreamDataProvider extends ChangeNotifier {
       yield [];
     }
   }
+  ///get friends video
 
   Stream<List<UserModelT>> getFollowingUsers(String currentUserId) {
     return FirebaseFirestore.instance
@@ -374,4 +413,42 @@ class StreamDataProvider extends ChangeNotifier {
       return followersList; // Return the list of followers' details
     });
   }
+  Stream<List<Map<String, dynamic>>> getNotifications() async* {
+    final notificationsCollection = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser)
+        .collection('notifications');
+
+    yield* notificationsCollection.snapshots().asyncMap((snapshot) async {
+      final notifications = snapshot.docs.map((doc) {
+        return NotificationModel.fromMap(doc.data());
+      }).toList();
+
+      final enrichedNotifications = await Future.wait(notifications.map((notification) async {
+        // Get sender details
+        final senderDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(notification.senderId)
+            .get();
+        final senderData = UserModelT.fromMap(senderDoc.data()!);
+
+        // Get post details
+        final postDoc = await FirebaseFirestore.instance
+            .collection('posts')
+            .doc(notification.postId)
+            .get();
+        final postData = MediaPost.fromMap(postDoc.data()!);
+        // postDoc.data();
+
+        return {
+          'notification': notification,
+          'sender': senderData,
+          'post': postData,
+        };
+      }));
+
+      return enrichedNotifications;
+    });
+  }
+
 }

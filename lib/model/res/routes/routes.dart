@@ -1,5 +1,6 @@
 
 import 'package:crispy/model/res/routes/routes_name.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import '../../../screens/MediaSelection/showMedia.dart';
 import '../../../screens/MediaSelection/uploadMedia.dart';
@@ -17,6 +18,7 @@ import '../../../screens/mainScreen/homeScreen.dart';
 import '../../../screens/mainScreen/mainScreen.dart';
 import '../../../screens/myProfile/editProfile.dart';
 import '../../../screens/notifications/notificationScreen.dart';
+import '../../../screens/notifications/viewNotificationsPost.dart';
 import '../../../screens/setting/accounts/accountsScreen.dart';
 import '../../../screens/setting/blockedUsers/blockedUsersScreen.dart';
 import '../../../screens/setting/notificationSetting/notificationSettingScreen.dart';
@@ -58,6 +60,7 @@ class Routes {
     GetPage(name: RoutesName.showMedia, page: () => ShowMedia()),
     GetPage(name: RoutesName.blockedUsers, page: () => BlockedUserScreen()),
     GetPage(name: RoutesName.editGroupDetails, page: () => EditGroupDetailsScreen()),
+    GetPage(name: RoutesName.notificationPostScreen, page: () => NotificationsPost()),
     // GetPage(name: RoutesName.groupChat, page: () => GroupChatScreen()),
 
   ];

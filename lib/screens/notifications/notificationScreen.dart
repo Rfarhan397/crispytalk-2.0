@@ -1,13 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crispy/model/mediaPost/mediaPost_model.dart';
+import 'package:crispy/model/res/components/app_back_button.dart';
+import 'package:crispy/model/res/routes/routes_name.dart';
 import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
 import 'package:crispy/provider/stream/streamProvider.dart';
+import 'package:crispy/screens/notifications/viewNotificationsPost.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import '../../constant.dart';
+import '../../model/notification/notificationModel.dart';
 import '../../model/res/constant/app_assets.dart';
 import '../../model/res/widgets/app_text.dart.dart';
+import '../../model/user_model/user_model.dart';
 import '../../provider/notification/notificationProvider.dart';
 
 class NotificationScreen extends StatelessWidget {
@@ -32,37 +39,35 @@ class NotificationScreen extends StatelessWidget {
             child: Column(
               children: [
                 // Custom AppBar
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Get.back();
-                        },
-                        child: Container(
-                          height: 25,
-                          width: 25,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(100),
-                            color: Colors.white,
-                          ),
-                          child: const Icon(
-                            Icons.arrow_back_ios,
-                            color: primaryColor,
-                            size: 15,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      const AppTextWidget(
-                        text: "Notification",
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ],
-                  ),
+                Row(
+                  children: [
+                    AppBackButton(),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     Get.back();
+                    //   },
+                    //   child: Container(
+                    //     height: 25,
+                    //     width: 25,
+                    //     decoration: BoxDecoration(
+                    //       borderRadius: BorderRadius.circular(100),
+                    //       color: Colors.white,
+                    //     ),
+                    //     child: const Icon(
+                    //       Icons.arrow_back_ios,
+                    //       color: primaryColor,
+                    //       size: 15,
+                    //     ),
+                    //   ),
+                    // ),
+                    SizedBox(width: 16),
+                    AppTextWidget(
+                      text: "Notification",
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ],
                 ),
                 SizedBox(height: 3.h),
                 // Segmented Control for Tabs
@@ -141,60 +146,51 @@ class NotificationScreen extends StatelessWidget {
                 SizedBox(height: 3.h),
                 // Notification List
                 Expanded(
-                  child: StreamBuilder(
-                    stream: FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(currentUser)
-                        .collection('notifications')
-                        .snapshots(),
+                  child: StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: StreamDataProvider().getNotifications(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
+                        return const Center(
+                            child: CircularProgressIndicator(color: primaryColor,backgroundColor: customGrey,
+                        strokeWidth: 2,
+                          strokeCap: StrokeCap.butt,
+                        ));
                       }
 
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return const Center(
-                          child: AppTextWidget(
-                            text: "No notifications yet.",
-                            fontSize: 16,
-                            color: Colors.grey,
-                          ),
-                        );
+                      if (snapshot.hasError) {
+                        return Text('Error: ${snapshot.error}');
+                      }
+
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Text('No notifications available');
                       }
 
                       final notifications = snapshot.data!;
-                      // final todayNotifications = notifications.where((notification) {
-                      //   final notificationDate = DateTime.fromMillisecondsSinceEpoch(int.parse(notification['timestamp']));
-                      //   return _isToday(notificationDate);
-                      // }).toList();
 
-                      // final lastWeekNotifications = notifications.where((notification) {
-                      //   final notificationDate = DateTime.fromMillisecondsSinceEpoch(int.parse(notification['timestamp']));
-                      //   return !_isToday(notificationDate);
-                      // }).toList();
-                      //
-                      // return Consumer<NotificationProvider>(
-                      //   builder: (context, notificationProvider, _) {
-                      //     final selectedNotifications = notificationProvider.selectedIndex == 0
-                      //         ? todayNotifications
-                      //         : lastWeekNotifications;
-                      //
-                      //     if (selectedNotifications.isEmpty) {
-                      //       return const Center(
-                      //         child: AppTextWidget(
-                      //           text: "No notifications in this category.",
-                      //           fontSize: 16,
-                      //           color: Colors.grey,
-                      //         ),
-                      //       );
-                      //     }
 
                       return ListView.builder(
                         padding: const EdgeInsets.all(16),
-                        itemCount: notifications.docs.length,
+                        itemCount: notifications.length,
                         itemBuilder: (context, index) {
-                          final notification = notifications.docs[index];
-                          return Text(index.toString());
+                          final notification = notifications[index]['notification'] as NotificationModel;
+                          final sender = notifications[index]['sender'] as UserModelT;
+                          final post = notifications[index]['post'] as MediaPost;
+                          return NotificationCard(
+                            title: notification.message  ,
+                            subtitle: 'Click to View',
+                            imageUrl: sender.profileUrl ?? '',
+                            time: _formatTime(notification.timestamp),
+                            actionText: 'View',
+                            viewOnTap: () {
+                              // Get.toNamed(RoutesName.notificationPostScreen,
+                              //   arguments: {
+                              //     'notification': notification,
+                              //     'sender': sender,
+                              //     'post': post,
+                              //   },
+                              // );
+                            },
+                          );
                         },
                       );
                     },
@@ -207,14 +203,6 @@ class NotificationScreen extends StatelessWidget {
       ),
     );
   }
-
-  bool _isToday(DateTime date) {
-    final now = DateTime.now();
-    return date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day;
-  }
-
   String _formatTime(String timestamp) {
     final dateTime = DateTime.fromMillisecondsSinceEpoch(int.parse(timestamp));
     final now = DateTime.now();
@@ -235,6 +223,7 @@ class NotificationCard extends StatelessWidget {
   final String time;
   final String actionText;
   final String imageUrl;
+  final VoidCallback viewOnTap;
 
   NotificationCard({
     required this.title,
@@ -242,6 +231,7 @@ class NotificationCard extends StatelessWidget {
     required this.time,
     required this.actionText,
     required this.imageUrl,
+    required this.viewOnTap,
   });
 
   @override
@@ -269,16 +259,16 @@ class NotificationCard extends StatelessWidget {
                   children: [
                     AppTextWidget(
                       text: title,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      fontSize: 14,
                       color: const Color(0xff6F6D6D),
                     ),
                     SizedBox(height: 0.5.h),
-                    AppTextWidget(
-                      text: subtitle,
-                      color: const Color(0xff6F6D6D),
-                      fontSize: 12,
-                    ),
+                    // AppTextWidget(
+                    //   text: subtitle,
+                    //   color: const Color(0xff6F6D6D),
+                    //   fontSize: 12,
+                    // ),
                   ],
                 ),
               ),
@@ -286,21 +276,24 @@ class NotificationCard extends StatelessWidget {
                 children: [
                   AppTextWidget(text: time, color: Colors.grey),
                   SizedBox(height: 1.h),
-                  Container(
-                    padding: const EdgeInsets.all(5),
-                    decoration: BoxDecoration(
-                      color: primaryColor,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      actionText,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                  // GestureDetector(
+                  //   onTap: viewOnTap,
+                  //   child: Container(
+                  //     padding: const EdgeInsets.all(5),
+                  //     decoration: BoxDecoration(
+                  //       color: primaryColor,
+                  //       borderRadius: BorderRadius.circular(8),
+                  //     ),
+                  //     child: Text(
+                  //       actionText,
+                  //       style: const TextStyle(
+                  //         fontSize: 10,
+                  //         fontWeight: FontWeight.w500,
+                  //         color: Colors.white,
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
             ],

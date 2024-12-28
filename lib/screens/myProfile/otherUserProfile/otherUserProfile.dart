@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crispy/provider/current_user/current_user_provider.dart';
 import 'package:crispy/provider/mediaPost/media_post_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -129,6 +130,7 @@ class OtherUserProfile extends StatelessWidget {
             yes: "Block",
             yesTap: () {
               blockUser();
+              Provider.of<CurrentUserProvider>(context,listen: false).fetchCurrentUserDetails();
             },
           ),
         );
@@ -168,7 +170,7 @@ class UserProfileOtherUser extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
+    final cUser = Provider.of<CurrentUserProvider>(context,).currentUser;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -201,7 +203,17 @@ class UserProfileOtherUser extends StatelessWidget {
                 SizedBox(height: 3.w),
                 OtherActionButton(userModel),
                 SizedBox(height: 2.h),
-                MediaWrap(userUid: userModel.userUid),
+                // if(cUser!.blocks.contains(userModel.userUid))
+
+                  const Align(
+                    alignment: Alignment.center,
+                    child: AppTextWidget(
+                      text: 'Blocked',
+                    ),
+                  ),
+                // if(!cUser.blocks.contains(userModel.userUid))
+
+                  MediaWrap(userUid: userModel.userUid),
               ],
             ),
           ),

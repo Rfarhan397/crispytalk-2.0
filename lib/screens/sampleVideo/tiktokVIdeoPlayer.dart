@@ -160,8 +160,8 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                         return GestureDetector(
                           onTap: () {
                             if (post.userDetails?.fcmToken != null) {
-                              actionP.toggleListCheck(index,
-                                  type: ToggleType.like, context: context);
+                              actionP.toggleListCheck(context,index,
+                                  type: ToggleType.like, );
                             }
                           },
                           child: Column(
@@ -229,8 +229,8 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                     // Favorite Icon
                     GestureDetector(
                       onTap: () {
-                        actionP.toggleListCheck(index,
-                            type: ToggleType.save, context: context);
+                        actionP.toggleListCheck(context,index,
+                            type: ToggleType.save, );
                       },
                       child: Column(
                         children: [

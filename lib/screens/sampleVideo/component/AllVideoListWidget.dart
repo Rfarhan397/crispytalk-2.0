@@ -152,8 +152,8 @@ class _AllvideolistwidgetState extends State<Allvideolistwidget> {
                         return GestureDetector(
                           onTap: () {
                             if (post.userDetails?.fcmToken != null) {
-                              actionP.toggleListCheck(index,
-                                  type: ToggleType.like, context: context);
+                              actionP.toggleListCheck(context,index,
+                                  type: ToggleType.like,  );
                               // Provider.of<ActionProvider>(context, listen: false)
                               //     .toggleLike(
                               //   post.timeStamp,
@@ -225,8 +225,8 @@ class _AllvideolistwidgetState extends State<Allvideolistwidget> {
                     // Favorite Icon
                     GestureDetector(
                       onTap: () {
-                        actionP.toggleListCheck(index,
-                            type: ToggleType.save, context: context);
+                        actionP.toggleListCheck(context,index,
+                            type: ToggleType.save, );
                       },
                       child: Column(
                         children: [

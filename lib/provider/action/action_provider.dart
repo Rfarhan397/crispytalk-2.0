@@ -5,7 +5,6 @@ import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crispy/model/services/fcm/fcm_services.dart';
-import 'package:crispy/provider/current_user/current_user_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -24,6 +23,7 @@ import '../../model/res/constant/app_utils.dart';
 import '../../model/res/routes/routes_name.dart';
 import '../../model/services/enum/toastType.dart';
 import '../chat/chatProvider.dart';
+import '../current_user/current_user_provider.dart';
 import '../mediaSelection/mediaSelectionProvider.dart';
 import '../savedPost/savedPostProvider.dart';
 
@@ -850,10 +850,9 @@ class ActionProvider extends ChangeNotifier {
           .doc(recipientId)
           .collection('notifications')
           .doc();
-      print('iddddd...........');
-      print(recipientId);
+
       await notificationRef.set({
-        'id': notificationRef.id,
+        'id': notificationRef.id, // Set the document ID here
         'recipientId': recipientId,
         'senderId': senderId,
         'message': message,
@@ -940,8 +939,12 @@ class ActionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleListCheck(int index,
-      {required ToggleType type, required BuildContext context}) {
+  void toggleListCheck(context, int index, {required ToggleType type}) async {
+    await Provider.of<CurrentUserProvider>(context, listen: false)
+        .fetchCurrentUserDetails();
+    final cUser =
+        Provider.of<CurrentUserProvider>(context, listen: false).currentUser;
+
     switch (type) {
       case ToggleType.like:
         if (_posts[index].likes.contains(currentUser)) {
@@ -955,36 +958,32 @@ class ActionProvider extends ChangeNotifier {
           FCMService().sendNotification(
               posts[index].userDetails?.fcmToken ?? '',
               'New Notification',
-              'abc user like your post',
+              '${cUser?.name ?? "User"} liked your post',
               currentUser);
-          print('strttt like..............');
           try {
             _saveNotificationToFirestore(
               recipientId: posts[index].userDetails!.userUid,
               senderId: currentUser,
-              message:
-                  '${Provider.of<CurrentUserProvider>(context, listen: false).currentUser!.name} liked your post',
+              message: '${cUser?.name} liked your post',
               postId: posts[index].timeStamp,
               type: 'like',
             );
-            print('success.......................................');
+            log("Notification saved successfully for post ID: ${posts[index].timeStamp}");
           } catch (e) {
-            print('error..............');
-            print(e.toString());
+            log('Error saving notification: $e'); // Log the error
           }
         }
         break;
       case ToggleType.save:
         if (_posts[index].saves.contains(currentUser)) {
-          log("Remove Likes");
+          log("Remove saves");
           posts[index].saves.remove(currentUser);
           unSavePost(_posts[index].timeStamp);
         } else {
-          log("Add Likes............................................");
+          log("Add saves");
           posts[index].saves.add(currentUser);
           savePost(_posts[index].timeStamp);
-          // FCMService().sendNotification(posts[index].userDetails!.fcmToken,
-          //     'post like', 'abc liked your post', currentUser);
+
         }
         break;
     }

@@ -32,6 +32,7 @@ class UserModelT {
   final List<String> followers;
   final List<String> likes;
   final List<String> following;
+  final List<String> blocks;
   final String bgUrl;
   final String fcmToken,gender;
   final String? facebook,instagram;
@@ -46,6 +47,7 @@ class UserModelT {
     required this.email,
     required this.name,
     required this.password,
+    required this.blocks,
     required this.userType,
     required this.profileUrl,
     required this.userUid,
@@ -78,6 +80,7 @@ class UserModelT {
       isOnline: data['isOnline'] ?? false,
       isChecked: data['isChecked'] ?? false,
       followers: List<String>.from(data['followers'] ?? ['0']),
+      blocks: List<String>.from(data['blocks'] ?? ['0']),
       likes: List<String>.from(data['likes'] ?? ['0']),
       following: List<String>.from(data['following'] ?? ['0']),
 

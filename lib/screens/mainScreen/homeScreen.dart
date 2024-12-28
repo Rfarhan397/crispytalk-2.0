@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:crispy/model/res/constant/app_assets.dart';
 import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
 import 'package:crispy/provider/action/action_provider.dart';
+import 'package:crispy/provider/current_user/current_user_provider.dart';
 import 'package:crispy/screens/mainScreen/suggestedUser/suggestedUser.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -43,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     // Initialize posts cache when home screen loads
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async{
       if (mounted) {
         context.read<PostCacheProvider>().initializePosts();
       }
@@ -227,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
             () {
               Get.to(OtherUserProfile(
                   userID: postData.userUid,
-                  userName: postData.userDetails!.name));
+                  userName: postData.userDetails?.name ?? "umer" ));
             },
             postData.userDetails?.profileUrl ?? "",
             postData.userDetails?.name.capitalizeFirst ?? 'Unknown User',
@@ -238,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               final isVideo = postData.mediaType == 'mp4';
 
-              if (isVideo) {
+              // if (isVideo) {
                 log('the video is already available ${customLink + postData.mediaUrl}');
                 context.read<ActionProvider>().saveModel(post);
                 Get.to(
@@ -250,11 +251,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
 
-              }
+              // }
 
-              if (isImage) {
-                Get.to(ImageDetailScreen(imageUrl: postData.mediaUrl));
-              }
+              // if (isImage) {
+              //   Get.to(ImageDetailScreen(imageUrl: postData.mediaUrl));
+              // }
             },
             postData.mediaUrl,
             postData.likes,
@@ -447,8 +448,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           fit: BoxFit.cover,
                         )
                       : mediaType == 'mp4'
-                          ? SizedBox(
-                    // height: 30.h,
+                          ? Container(
+                    color: customGrey,
+                    height: 40.h,
                             width: double.infinity,
                             child: VideoWidget(
                               isAutoPlay: false,

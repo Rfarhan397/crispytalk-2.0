@@ -1,6 +1,8 @@
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 import '../../../constant.dart';
@@ -12,6 +14,7 @@ import '../../../model/res/widgets/button_widget.dart';
 import '../../../model/res/widgets/cachedImage/cachedImage.dart';
 import '../../../model/user_model/user_model.dart';
 import '../../../provider/stream/streamProvider.dart';
+import '../../myProfile/otherUserProfile/otherUserProfile.dart';
 
 class BlockedUserScreen extends StatelessWidget {
   const BlockedUserScreen({super.key});
@@ -80,20 +83,31 @@ class BlockedUserScreen extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                CircleAvatar(
-                child: CachedShimmerImageWidget(
-                imageUrl: user.profileUrl,
-                ),
-                ),
-                SizedBox(width: 2.w,),
-                Column(
-                  children: [
-                    AppTextWidget(text: user.name,fontSize: 16,),
-                  ],
-                ),
-              ],
+            GestureDetector(
+              onTap: () {
+
+                Get.to(OtherUserProfile(
+                        userID: user.userUid,
+                        userName: user.name));
+              },
+              child: Row(
+                children: [
+                  CircleAvatar(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(100),
+                    child: CachedShimmerImageWidget(
+                    imageUrl: user.profileUrl,
+                    ),
+                  ),
+                  ),
+                  SizedBox(width: 2.w,),
+                  Column(
+                    children: [
+                      AppTextWidget(text: user.name,fontSize: 16,),
+                    ],
+                  ),
+                ],
+              ),
             ),
             ButtonWidget(
                 text: 'Unblock',

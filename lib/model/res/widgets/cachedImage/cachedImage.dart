@@ -41,7 +41,7 @@ class CachedShimmerImageWidget extends StatelessWidget {
         color: Colors.grey[300],
         child: showErrorIcon
             ? Image.asset(
-          AppAssets.noProfile, // Replace with your constant asset path
+          AppAssets.noProfile,
           fit: BoxFit.cover,
         )
             : const SizedBox.shrink(),

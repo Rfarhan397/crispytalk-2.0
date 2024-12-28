@@ -83,7 +83,7 @@ class SignUpScreen extends StatelessWidget {
                 hintText: 'Password',
                 isObscure: passwordVisibilityProvider.isObscure,
                 toggleVisibility: passwordVisibilityProvider.toggleVisibility,
-                showVisibilityToggle: true,
+                showVisibilityToggle: false,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your password';
@@ -105,7 +105,7 @@ class SignUpScreen extends StatelessWidget {
                 hintText: 'Confirm Password',
                 isObscure: passwordVisibilityProvider.isObscure,
                 toggleVisibility: passwordVisibilityProvider.toggleVisibility,
-                showVisibilityToggle: false,
+                showVisibilityToggle: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please confirm your password';

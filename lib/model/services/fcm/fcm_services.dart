@@ -117,13 +117,16 @@ class FCMService {
             callerName: additionalData['name'],
           ),
         );
+      }else{
+        log('hi');
+        showForegroundNotification(message);
+
       }
-      showForegroundNotification(message);
     }
   }
 
   void showForegroundNotification(RemoteMessage message) {
-    RemoteNotification? notification = message.notification;
+    RemoteNotification?  notification = message.notification;
     AndroidNotification? android = message.notification?.android;
 
     if (notification != null) {

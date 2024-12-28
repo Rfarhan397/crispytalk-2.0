@@ -29,6 +29,7 @@ class RoutesName{
   static const blockedUsers = "/blockedUsersScreen";
   static const groupChat = "/groupChatScreen";
   static const editGroupDetails = "/editGroupDetails";
+  static const notificationPostScreen = "/viewNotificationsPost";
 
 
 }

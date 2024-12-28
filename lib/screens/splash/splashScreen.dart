@@ -42,6 +42,8 @@ class _SplashScreenState extends State<SplashScreen> {
         // Wait for saved posts to initialize
         await Provider.of<SavedPostsProvider>(context, listen: false)
             .fetchSavedPosts(currentUser);
+        await Provider.of<CurrentUserProvider>(context, listen:false)
+        .fetchCurrentUserDetails();
       }
       
       // Add a shorter timeout
