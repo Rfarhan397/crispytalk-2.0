@@ -107,7 +107,7 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                               child: VideoPlayer(_controllers[index]),
                             )
                           : const Center(
-                              child: CircularProgressIndicator(),
+                              child: SizedBox.shrink(),
                             )
                       : CachedShimmerImageWidget(
                           imageUrl: "$customLink${post.mediaUrl}",

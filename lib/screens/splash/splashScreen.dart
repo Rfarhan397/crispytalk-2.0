@@ -1,9 +1,6 @@
 import 'dart:developer';
-import 'package:crispy/provider/action/action_provider.dart';
-import 'package:crispy/provider/mediaPost/media_post_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import '../../constant.dart';
@@ -11,10 +8,8 @@ import '../../main.dart';
 import '../../model/res/constant/app_assets.dart';
 import '../../model/services/fcm/rehman_local.dart';
 import '../../provider/current_user/current_user_provider.dart';
-import '../../provider/postCache/postCacheProvider.dart';
 import '../../provider/savedPost/savedPostProvider.dart';
 import '../../provider/stream/streamProvider.dart';
-import '../../provider/suggested_users/suggested_users_provider.dart';
 import '../login/loginScreen.dart';
 import '../mainScreen/mainScreen.dart';
 import 'OnBoarding/OnBoardingScreenOne.dart';
@@ -31,7 +26,8 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     _initializeApp();
-    FlutterLocalNotification.initialize(flutterLocalNotificationsPlugin);  }
+    FlutterLocalNotification.initialize(flutterLocalNotificationsPlugin);
+  }
 
   Future<void> _initializeApp() async {
     try {
@@ -50,8 +46,8 @@ class _SplashScreenState extends State<SplashScreen> {
       }
       
       // Add a shorter timeout
-      await Future.delayed(const Duration(seconds: 2));
-      
+      await Future.delayed(const Duration(seconds: 5));
+
       // Navigation
       if (auth.currentUser != null) {
         Get.off(() => const MainScreen());

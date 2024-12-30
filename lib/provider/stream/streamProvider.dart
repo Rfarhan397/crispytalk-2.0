@@ -73,6 +73,35 @@ class StreamDataProvider extends ChangeNotifier {
       return commentsWithUserDetails;
     });
   }
+  //30/12/24
+  Stream<List<MediaPost>> fetchPostsWithUserDetails(String currentUserUid) async* {
+    final postsCollection = FirebaseFirestore.instance.collection('posts');
+    final usersCollection = FirebaseFirestore.instance.collection('users');
+
+    await for (var postSnapshot in postsCollection.snapshots()) {
+      final posts = postSnapshot.docs
+          .map((doc) => MediaPost.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
+
+      final filteredPosts = <MediaPost>[];
+
+      for (var post in posts) {
+        final userDoc = await usersCollection.doc(post.userUid).get();
+        if (userDoc.exists) {
+          final userData = userDoc.data() as Map<String, dynamic>;
+          final user = UserModelT.fromMap(userData);
+
+          // Skip posts if the user is blocked
+          if (!(user.blocks.contains(currentUserUid) ?? false)) {
+            filteredPosts.add(post);
+          }
+        }
+      }
+
+      yield filteredPosts;
+    }
+  }
+
 
   Stream<List<MediaPost>> getPostsWithUserDetails({
     required String currentUserId,

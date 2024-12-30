@@ -255,9 +255,7 @@ class UserProfileCurrentUser extends StatelessWidget {
                                       child: Container(
                                         height: 200,
                                         width:
-                                            MediaQuery.of(context).size.width /
-                                                    2 -
-                                                15,
+                                            MediaQuery.of(context).size.width / 2 - 15,
                                         decoration: BoxDecoration(
                                           borderRadius:
                                               BorderRadius.circular(15),

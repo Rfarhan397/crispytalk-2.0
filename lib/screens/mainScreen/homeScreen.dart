@@ -2,7 +2,6 @@ import 'dart:developer';
 import 'package:crispy/model/res/constant/app_assets.dart';
 import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
 import 'package:crispy/provider/action/action_provider.dart';
-import 'package:crispy/provider/current_user/current_user_provider.dart';
 import 'package:crispy/screens/mainScreen/suggestedUser/suggestedUser.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +38,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<VideoWidgetState> videoKey = GlobalKey<VideoWidgetState>();
-
+  late ScrollController _scrollController;
   @override
   void initState() {
     super.initState();
@@ -49,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
         context.read<PostCacheProvider>().initializePosts();
       }
     });
+
   }
 
   @override
@@ -149,14 +149,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             mediaUrl: customLink + mediaUrl,
                             mediaType: mediaType,
                             onTap: () {
-                              // Get.toNamed(
-                              //   RoutesName.video,
-                              //   arguments: {'videoUrl': mediaUrl},
-                              // );
                               context.read<ActionProvider>().saveModel(posts);
-                              Get.to(() => VideoFeedScreen(
-                                    initialIndex: index,
-                                  ));
+                              Get.to(() => VideoFeedScreen(initialIndex: index,));
                             },
                           ),
                         );
@@ -216,6 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget buildVerticalPostsList(List<MediaPost> post) {
     return ListView.builder(
+
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       scrollDirection: Axis.vertical,
@@ -226,6 +221,8 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: EdgeInsets.only(right: 3.w),
           child: buildPostContainer(
             () {
+              log('userUid : ${postData.userUid}');
+              log('userUid : ${postData.userUid}');
               Get.to(OtherUserProfile(
                   userID: postData.userUid,
                   userName: postData.userDetails?.name ?? "umer" ));
@@ -235,11 +232,6 @@ class _HomeScreenState extends State<HomeScreen> {
             _formatTime(postData.timeStamp) ?? 'time',
             postData.title,
             () {
-              final isImage = postData.mediaType == 'image';
-
-              final isVideo = postData.mediaType == 'mp4';
-
-              // if (isVideo) {
                 log('the video is already available ${customLink + postData.mediaUrl}');
                 context.read<ActionProvider>().saveModel(post);
                 Get.to(
@@ -247,15 +239,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   initialIndex: index,
                 ),
                 );
-
-
-
-
-              // }
-
-              // if (isImage) {
-              //   Get.to(ImageDetailScreen(imageUrl: postData.mediaUrl));
-              // }
             },
             postData.mediaUrl,
             postData.likes,

@@ -4,6 +4,7 @@ import 'package:crispy/model/res/widgets/cachedImage/cachedImage.dart';
 import 'package:crispy/provider/current_user/current_user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 import 'package:get/get.dart';
 import '../../../constant.dart';
@@ -23,17 +24,33 @@ class SuggestedUsers extends StatefulWidget {
   _SuggestedUsersState createState() => _SuggestedUsersState();
 }
 
+
 class _SuggestedUsersState extends State<SuggestedUsers> {
   bool isSuggestionVisible = true;
 
   @override
   void initState() {
     super.initState();
+    // Load saved suggestion visibility state
+    _loadSuggestionVisibility();
+
     // Fetch suggested users when the widget initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<SuggestedUsersProvider>(context, listen: false)
           .fetchSuggestedUsers(widget.currentUserId);
     });
+  }
+
+  Future<void> _loadSuggestionVisibility() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isSuggestionVisible = prefs.getBool('isSuggestionVisible') ?? true;
+    });
+  }
+
+  Future<void> _updateSuggestionVisibility(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isSuggestionVisible', value);
   }
 
   @override
@@ -54,7 +71,7 @@ class _SuggestedUsersState extends State<SuggestedUsers> {
                 ),
               ),
               Container(
-                height: 16.h,
+                height: 18.h,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   color: const Color(0xffD9D9D9),
@@ -63,13 +80,17 @@ class _SuggestedUsersState extends State<SuggestedUsers> {
                   children: [
                     SuggestionList(currentUserId: widget.currentUserId),
                     Positioned(
-                      top: 3,
-                      right: 8,
+                      top: 0.2.h,
+                      right: 1.w,
                       child: IconButton(
                         icon: const Icon(Icons.close,
                             color: primaryColor, size: 20),
-                        onPressed: () =>
-                            setState(() => isSuggestionVisible = false),
+                        onPressed: () {
+                          setState(() {
+                            isSuggestionVisible = false;
+                          });
+                          _updateSuggestionVisibility(false);
+                        },
                       ),
                     ),
                   ],

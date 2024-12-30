@@ -113,7 +113,6 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SuggestedUsersProvider()),
         ChangeNotifierProvider(create: (_) => MediaPostProvider()),
         ChangeNotifierProvider(create: (_) => WebrtcProvider()),
-
       ],
       child: Consumer<AppLifeCycleProvider>(
           builder: (context,provider,child) {

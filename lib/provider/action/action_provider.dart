@@ -15,8 +15,10 @@ import 'package:get/get_navigation/src/snackbar/snackbar.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:video_thumbnail/video_thumbnail.dart';
 import '../../constant.dart';
 import '../../model/mediaPost/mediaPost_model.dart';
 import '../../model/res/constant/app_utils.dart';
@@ -449,7 +451,6 @@ class ActionProvider extends ChangeNotifier {
             uploadedUrl.endsWith('.mov') ||
             uploadedUrl.endsWith('.avi')) {
           uploadedMediaType = 'mp4';
-          // await extractThumbnail(_filePath!);
         } else {
           uploadedMediaType = 'image';
         }
@@ -464,24 +465,7 @@ class ActionProvider extends ChangeNotifier {
       throw "File upload failed:: ${e.toString()}";
     }
   }
-  // Future<void> extractThumbnail(String videoPath) async {
-  //   final FlutterFFmpeg ffmpeg = FlutterFFmpeg();
-  //
-  //   // Generate a temporary thumbnail file from the video
-  //   final String thumbnailPath = '${Directory.systemTemp.path}/thumbnail.jpg';
-  //
-  //   // Use ffmpeg to extract the thumbnail (you can adjust the parameters as needed)
-  //   await ffmpeg.execute('-i $videoPath -ss 00:00:01.000 -vframes 1 $thumbnailPath');
-  //
-  //   log("Thumbnail generated at: $thumbnailPath");
-  //
-  //   // Save the thumbnail URL (locally or elsewhere)
-  //   uploadedThumbnailUrl = thumbnailPath;  // Set the local path of the thumbnail
-  //
-  //   log("Thumbnail saved locally at: $uploadedThumbnailUrl");
-  //
-  //   // You can now upload the thumbnail to another server or use it locally
-  // }
+
 
   Future<String> uploadFileThrough(String filePath) async {
     log('File path is :: $filePath');
@@ -990,5 +974,18 @@ class ActionProvider extends ChangeNotifier {
         break;
     }
     notifyListeners();
+  }
+
+  //generate url
+  Future<String?> generateThumbnail({required String url}) async {
+    final thumbnailPath = await VideoThumbnail.thumbnailFile(
+      video: url,
+      thumbnailPath: (await getTemporaryDirectory()).path,
+      imageFormat: ImageFormat.WEBP,
+      maxHeight: 64,
+      quality: 75,
+    );
+
+    return thumbnailPath;
   }
 }
