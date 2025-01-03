@@ -86,6 +86,7 @@ class StreamDataProvider extends ChangeNotifier {
       final filteredPosts = <MediaPost>[];
 
       for (var post in posts) {
+        if (post.audience != "Everyone") continue;
         final userDoc = await usersCollection.doc(post.userUid).get();
         if (userDoc.exists) {
           final userData = userDoc.data() as Map<String, dynamic>;

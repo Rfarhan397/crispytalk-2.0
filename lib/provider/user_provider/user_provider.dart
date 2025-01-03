@@ -124,7 +124,7 @@ class UserProvider with ChangeNotifier{
   }
 }
 
-class UserProvider2 with ChangeNotifier {
+class   UserProvider2 with ChangeNotifier {
   List<UserModelT> selectedUsers = [];
 
   void toggleSelection(UserModelT user) {

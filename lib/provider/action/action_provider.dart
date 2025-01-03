@@ -15,10 +15,8 @@ import 'package:get/get_navigation/src/snackbar/snackbar.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
-import 'package:video_thumbnail/video_thumbnail.dart';
 import '../../constant.dart';
 import '../../model/mediaPost/mediaPost_model.dart';
 import '../../model/res/constant/app_utils.dart';
@@ -974,18 +972,5 @@ class ActionProvider extends ChangeNotifier {
         break;
     }
     notifyListeners();
-  }
-
-  //generate url
-  Future<String?> generateThumbnail({required String url}) async {
-    final thumbnailPath = await VideoThumbnail.thumbnailFile(
-      video: url,
-      thumbnailPath: (await getTemporaryDirectory()).path,
-      imageFormat: ImageFormat.WEBP,
-      maxHeight: 64,
-      quality: 75,
-    );
-
-    return thumbnailPath;
   }
 }

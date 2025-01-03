@@ -1,23 +1,19 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crispy/constant.dart';
-import 'package:crispy/model/res/components/fullImagePreview.dart';
 import 'package:crispy/provider/stream/streamProvider.dart';
 import 'package:crispy/screens/sampleVideo/tiktokVIdeoPlayer.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:provider/provider.dart';
-
 import '../../../provider/action/action_provider.dart';
 import '../../../screens/myProfile/userProfile.dart';
-import '../../../screens/video/mediaViewerScreen.dart';
 import '../../mediaPost/mediaPost_model.dart';
 import '../widgets/cachedImage/cachedImage.dart';
+
 
 class MediaWrap extends StatelessWidget {
   final String userUid;
 
-  const MediaWrap({required this.userUid});
+  const MediaWrap({super.key, required this.userUid});
 
   @override
   Widget build(BuildContext context) {

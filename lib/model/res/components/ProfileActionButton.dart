@@ -81,13 +81,7 @@ class ProfileActions extends StatelessWidget {
         AppButtonWidget(
           prefixIcon: SvgPicture.asset(AppIcons.editProfile),
           onPressed: () async {
-            final fcm = FCMServiceR();
-            log('onTap');
-            await fcm.sendNotification(
-                "ciUswNChRGmXVwSChyTptP:APA91bFavdpVY7LZy2W7OfWht1MX12-dpGa9kl7WvkngLtiIkfdBc0CLjhkq3YbJw6bC8TIJImdYAcvY1-QHFdW1-YnmagBbYqk7HgSkvaCt7h87e2jYqAg",
-                'title', 'body', 'senderId'
-            );
-            //Get.toNamed(RoutesName.editProfile);
+            Get.toNamed(RoutesName.editProfile);
           },
           text: "Edit Profile",
           radius: 12,
